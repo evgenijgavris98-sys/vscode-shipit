@@ -13,4 +13,8 @@ describe("selectModelTier", () => {
   it("uses sol for high risk", () => {
     assert.equal(selectModelTier({ id: "3", input: "scientific decision", risk: "high" }), "sol");
   });
+
+  it("uses astra for critical risk", () => {
+    assert.equal(selectModelTier({ id: "4", input: "critical regulatory review", risk: "critical" }), "astra");
+  });
 });
