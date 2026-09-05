@@ -12,8 +12,7 @@ export async function runBrainPilot(
 ): Promise<AgentResult> {
   const maxQaRetries = Math.max(0, options.maxQaRetries ?? 1);
   const tier = selectModelTier(task);
-
-  const draft = await provider.run("rd_chemist", { task, tier });
+  let draft = await provider.run("rd_chemist", { task, tier });
   let retryCount = 0;
 
   while (true) {
@@ -35,5 +34,10 @@ export async function runBrainPilot(
     }
 
     retryCount += 1;
+    draft = await provider.run("rd_chemist", {
+      task,
+      tier,
+      qaFeedback: qaOutput,
+    });
   }
 }
