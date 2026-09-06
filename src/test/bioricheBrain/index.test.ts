@@ -15,12 +15,13 @@ const config: BrainConfig = {
 };
 
 describe("BIORICHE BRAIN entry point", () => {
-  it("falls back from Astra to Sol when the first provider call fails", async () => {
+  it("falls back from Astra to Sol and then runs mandatory QA", async () => {
     const calls: string[] = [];
     const provider: BrainProvider = {
-      async run(_agent, request) {
-        calls.push(request.tier);
+      async run(agent, request) {
+        calls.push(`${agent}:${request.tier}`);
         if (request.tier === "astra") throw new Error("temporary failure");
+        if (agent === "qa_inspector") return "PASS: result is supported";
         return "sol-result";
       },
     };
@@ -30,8 +31,9 @@ describe("BIORICHE BRAIN entry point", () => {
       config,
       provider,
     );
-    assert.deepStrictEqual(calls, ["astra", "sol"]);
+    assert.deepStrictEqual(calls, ["rd_chemist:astra", "rd_chemist:sol", "qa_inspector:sol"]);
     assert.strictEqual(result.output, "sol-result");
+    assert.ok(result.qaOutput?.startsWith("PASS"));
   });
 
   it("refuses execution when Brain is disabled", async () => {
