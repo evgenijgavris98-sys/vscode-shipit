@@ -5,140 +5,52 @@
   "version": "3.0.1",
   "publisher": "emanuelebartolesi",
   "icon": "img/logo.png",
-  "sponsor": {
-    "url": "https://github.com/sponsors/kasuken"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/kasuken/vscode-shipit.git"
-  },
+  "sponsor": { "url": "https://github.com/sponsors/kasuken" },
+  "repository": { "type": "git", "url": "https://github.com/kasuken/vscode-shipit.git" },
   "license": "MIT",
   "homepage": "https://github.com/kasuken/vscode-shipit",
-  "engines": {
-    "vscode": "^1.93.0"
-  },
-  "categories": [
-    "AI",
-    "Chat",
-    "Other"
-  ],
-  "keywords": [
-    "copilot",
-    "ai",
-    "agent",
-    "prd",
-    "development",
-    "loop",
-    "shipit",
-    "autonomous"
-  ],
-  "activationEvents": [
-    "onStartupFinished"
-  ],
+  "engines": { "vscode": "^1.93.0" },
+  "categories": ["AI", "Chat", "Other"],
+  "keywords": ["copilot", "ai", "agent", "prd", "development", "loop", "shipit", "autonomous"],
+  "activationEvents": ["onStartupFinished"],
   "main": "./out/extension.js",
   "contributes": {
-    "viewsContainers": {
-      "activitybar": [
-        {
-          "id": "shipit",
-          "title": "ShipIt",
-          "icon": "$(package)"
-        }
-      ]
-    },
-    "views": {
-      "shipit": [
-        {
-          "type": "webview",
-          "id": "shipit.sidebar",
-          "name": "ShipIt",
-          "icon": "$(package)"
-        }
-      ]
-    },
+    "viewsContainers": { "activitybar": [{ "id": "shipit", "title": "ShipIt", "icon": "$(package)" }] },
+    "views": { "shipit": [{ "type": "webview", "id": "shipit.sidebar", "name": "ShipIt", "icon": "$(package)" }] },
     "commands": [
-      {
-        "command": "shipit.showPanel",
-        "title": "ShipIt: Open Control Panel",
-        "icon": "$(package)"
-      },
-      {
-        "command": "shipit.start",
-        "title": "ShipIt: Start Loop"
-      },
-      {
-        "command": "shipit.stop",
-        "title": "ShipIt: Stop Loop"
-      },
-      {
-        "command": "shipit.pause",
-        "title": "ShipIt: Pause Loop"
-      },
-      {
-        "command": "shipit.resume",
-        "title": "ShipIt: Resume Loop"
-      },
-      {
-        "command": "shipit.next",
-        "title": "ShipIt: Run Single Step"
-      },
-      {
-        "command": "shipit.generatePrd",
-        "title": "ShipIt: Generate PRD from Description"
-      },
-      {
-        "command": "shipit.generateUserStories",
-        "title": "ShipIt: Generate User Stories for Task"
-      },
-      {
-        "command": "shipit.generateAllUserStories",
-        "title": "ShipIt: Generate All User Stories"
-      },
-      {
-        "command": "shipit.viewLogs",
-        "title": "ShipIt: View Logs"
-      }
+      { "command": "shipit.showPanel", "title": "ShipIt: Open Control Panel", "icon": "$(package)" },
+      { "command": "shipit.start", "title": "ShipIt: Start Loop" },
+      { "command": "shipit.stop", "title": "ShipIt: Stop Loop" },
+      { "command": "shipit.pause", "title": "ShipIt: Pause Loop" },
+      { "command": "shipit.resume", "title": "ShipIt: Resume Loop" },
+      { "command": "shipit.next", "title": "ShipIt: Run Single Step" },
+      { "command": "shipit.generatePrd", "title": "ShipIt: Generate PRD from Description" },
+      { "command": "shipit.generateUserStories", "title": "ShipIt: Generate User Stories for Task" },
+      { "command": "shipit.generateAllUserStories", "title": "ShipIt: Generate All User Stories" },
+      { "command": "shipit.viewLogs", "title": "ShipIt: View Logs" },
+      { "command": "shipit.createManualPrd", "title": "ShipIt: Create Manual PRD" }
     ],
     "configuration": {
       "title": "ShipIt",
       "properties": {
-        "shipit.files.prdPath": {
-          "type": "string",
-          "default": ".shipit/PRD.md",
-          "description": "Path to the PRD (Product Requirements Document) file"
-        },
-        "shipit.files.progressPath": {
-          "type": "string",
-          "default": ".shipit/progress.txt",
-          "description": "Path to the progress tracking file"
-        },
-        "shipit.prompt.customTemplate": {
-          "type": "string",
-          "default": "",
-          "editPresentation": "multilineText",
-          "description": "Custom prompt template to override the default. Use {{task}} for the task description, {{prd}} for PRD contents, {{progress}} for progress log, {{requirements}} for requirement steps, and {{workspace}} for workspace path."
-        },
-        "shipit.prompt.customPrdGenerationTemplate": {
-          "type": "string",
-          "default": "",
-          "editPresentation": "multilineText",
-          "description": "Custom PRD generation prompt template. Use {{task}} for user's request and {{workspace}} for workspace path."
-        },
-        "shipit.models.prdGeneration": {
-          "type": "string",
-          "default": "gpt-5.2",
-          "description": "Model to use for PRD generation"
-        },
-        "shipit.models.userStoriesGeneration": {
-          "type": "string",
-          "default": "gpt-5.2",
-          "description": "Model to use for user stories generation"
-        },
-        "shipit.models.taskImplementation": {
-          "type": "string",
-          "default": "gpt-5-mini",
-          "description": "Model to use for task/user story implementation"
-        }
+        "shipit.files.prdPath": { "type": "string", "default": ".shipit/PRD.md", "description": "Path to the PRD (Product Requirements Document) file" },
+        "shipit.files.progressPath": { "type": "string", "default": ".shipit/progress.txt", "description": "Path to the progress tracking file" },
+        "shipit.prompt.customTemplate": { "type": "string", "default": "", "editPresentation": "multilineText", "description": "Custom prompt template to override the default. Use {{task}}, {{prd}}, {{progress}}, {{requirements}}, and {{workspace}}." },
+        "shipit.prompt.customPrdGenerationTemplate": { "type": "string", "default": "", "editPresentation": "multilineText", "description": "Custom PRD generation prompt template. Use {{task}} and {{workspace}}." },
+        "shipit.models.prdGeneration": { "type": "string", "default": "gpt-5.2", "description": "Model to use for PRD generation" },
+        "shipit.models.userStoriesGeneration": { "type": "string", "default": "gpt-5.2", "description": "Model to use for user stories generation" },
+        "shipit.models.taskImplementation": { "type": "string", "default": "gpt-5-mini", "description": "Model to use for task/user story implementation" },
+        "shipit.bioricheBrain.enabled": { "type": "boolean", "default": false, "description": "Enable the BIORICHE BRAIN orchestration layer" },
+        "shipit.bioricheBrain.provider": { "type": "string", "enum": ["copilot", "openai"], "default": "copilot", "description": "Provider for BIORICHE BRAIN; OpenAI requires OPENAI_API_KEY in the runtime environment" },
+        "shipit.bioricheBrain.astraEnabled": { "type": "boolean", "default": false, "description": "Allow GPT-6 Astra for explicitly marked frontier tasks" },
+        "shipit.bioricheBrain.modelLuna": { "type": "string", "default": "gpt-5.6-luna", "description": "OpenAI Luna model ID" },
+        "shipit.bioricheBrain.modelTerra": { "type": "string", "default": "gpt-5.6-terra", "description": "OpenAI Terra model ID" },
+        "shipit.bioricheBrain.modelSol": { "type": "string", "default": "gpt-5.6-sol", "description": "OpenAI Sol model ID" },
+        "shipit.bioricheBrain.modelAstra": { "type": "string", "default": "gpt-6-astra", "description": "OpenAI Astra model ID" },
+        "shipit.bioricheBrain.maxQaRetries": { "type": "number", "minimum": 0, "maximum": 5, "default": 1, "description": "Maximum QA retries" },
+        "shipit.bioricheBrain.maxProviderRetries": { "type": "number", "minimum": 0, "maximum": 5, "default": 2, "description": "Maximum provider retries" },
+        "shipit.bioricheBrain.maxConcurrency": { "type": "number", "minimum": 1, "maximum": 8, "default": 2, "description": "Maximum Brain concurrency" },
+        "shipit.bioricheBrain.parallelToolCalls": { "type": "boolean", "default": true, "description": "Allow parallel tool calls when the provider supports them" }
       }
     }
   },
@@ -160,10 +72,6 @@
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.52.0"
   },
-  "extensionDependencies": [
-    "github.copilot-chat"
-  ],
-  "dependencies": {
-    "@github/copilot-sdk": "^0.1.21"
-  }
+  "extensionDependencies": ["github.copilot-chat"],
+  "dependencies": { "@github/copilot-sdk": "^0.1.21" }
 }
