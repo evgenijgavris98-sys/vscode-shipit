@@ -1,11 +1,6 @@
 import type { AgentRequest, BrainAgent, BrainProvider } from "./types";
 import type { BrainConfig } from "./config";
-
-const ROLE_INSTRUCTIONS: Record<BrainAgent, string> = {
-  orchestrator: "Coordinate the BIORICHE BRAIN workflow. Delegate work, preserve constraints, and return an actionable result.",
-  rd_chemist: "Act as BIORICHE BRAIN R&D Chemist. Produce scientifically cautious, evidence-aware drafts. Do not invent experimental results or medical claims.",
-  qa_inspector: "Act as BIORICHE BRAIN QA Inspector. Check factual support, safety, unsupported claims, contradictions, and task compliance. Start with PASS or FAIL and give concise reasons.",
-};
+import { buildStableContext, buildTaskPrompt } from "./promptContext";
 
 interface ResponsesApiResult {
   output_text?: string;
@@ -19,10 +14,18 @@ export class OpenAIResponsesProvider implements BrainProvider {
       throw new Error("BIORICHE BRAIN requires OPENAI_API_KEY at runtime; no key is stored in the repository.");
     }
 
-    const model = this.config.models[request.tier];
-    const feedback = request.qaFeedback
-      ? `\n\nQA feedback from the previous attempt:\n${request.qaFeedback}`
-      : "";
+    const context = buildStableContext(agent);
+    const body: Record<string, unknown> = {
+      model: this.config.models[request.tier],
+      instructions: context.instructions,
+      input: buildTaskPrompt(context, request.task.input, request.qaFeedback),
+      prompt_cache_key: context.cacheKey,
+      parallel_tool_calls: this.config.parallelToolCalls,
+    };
+
+    if (request.reasoningEffort && request.tier !== "luna") {
+      body.reasoning = { effort: request.reasoningEffort };
+    }
 
     const response = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
@@ -30,13 +33,7 @@ export class OpenAIResponsesProvider implements BrainProvider {
         "Content-Type": "application/json",
         Authorization: `Bearer ${this.config.apiKey}`,
       },
-      body: JSON.stringify({
-        model,
-        instructions: ROLE_INSTRUCTIONS[agent],
-        input: `${request.task.input}${feedback}`,
-        prompt_cache_key: `bioriche-brain:${agent}:v1`,
-        parallel_tool_calls: true,
-      }),
+      body: JSON.stringify(body),
     });
 
     if (!response.ok) {
