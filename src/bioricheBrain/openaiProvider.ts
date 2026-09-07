@@ -24,19 +24,28 @@ export class OpenAIResponsesProvider implements BrainProvider {
       ? `\n\nQA feedback from the previous attempt:\n${request.qaFeedback}`
       : "";
 
+    const body: Record<string, unknown> = {
+      model,
+      instructions: ROLE_INSTRUCTIONS[agent],
+      input: `${request.task.input}${feedback}`,
+      prompt_cache_key: `bioriche-brain:${agent}:v1`,
+      prompt_cache_options: { ttl: "30m" },
+      parallel_tool_calls: true,
+      reasoning: { effort: this.config.reasoningEffort },
+    };
+
+    // Fast mode is intentionally opt-in. Astra does not support Fast mode with EU data residency.
+    if (this.config.fastMode && request.tier !== "astra") {
+      body.service_tier = "fast";
+    }
+
     const response = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${this.config.apiKey}`,
       },
-      body: JSON.stringify({
-        model,
-        instructions: ROLE_INSTRUCTIONS[agent],
-        input: `${request.task.input}${feedback}`,
-        prompt_cache_key: `bioriche-brain:${agent}:v1`,
-        parallel_tool_calls: true,
-      }),
+      body: JSON.stringify(body),
     });
 
     if (!response.ok) {
