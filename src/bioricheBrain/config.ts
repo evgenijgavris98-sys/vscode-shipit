@@ -15,6 +15,7 @@ export interface BrainConfig {
   models: Record<ModelTier, string>;
   reasoningEffort: ReasoningEffort;
   fastMode: boolean;
+  astraEnabled: boolean;
   maxQaRetries: number;
 }
 
@@ -47,6 +48,8 @@ export function loadBrainConfig(): BrainConfig {
     },
     reasoningEffort: reasoningEffort(),
     fastMode: booleanEnv("BIORICHE_BRAIN_FAST_MODE", false),
+    // Astra is a separate frontier tier and must never be enabled accidentally.
+    astraEnabled: booleanEnv("BIORICHE_BRAIN_ASTRA_ENABLED", false),
     maxQaRetries: Math.min(3, Math.max(0, Number(env("BIORICHE_BRAIN_MAX_QA_RETRIES") ?? "1"))),
   };
 }
