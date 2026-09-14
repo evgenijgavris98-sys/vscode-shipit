@@ -13,6 +13,14 @@ suite("BIORICHE BRAIN configuration", () => {
     assert.equal(config.enabled, false);
   });
 
+  test("keeps Astra disabled by default", () => {
+    const previous = process.env.BIORICHE_BRAIN_ASTRA_ENABLED;
+    delete process.env.BIORICHE_BRAIN_ASTRA_ENABLED;
+    const config = loadBrainConfig();
+    if (previous !== undefined) process.env.BIORICHE_BRAIN_ASTRA_ENABLED = previous;
+    assert.equal(config.astraEnabled, false);
+  });
+
   test("uses the GPT-5.6 tier defaults and Astra mapping", () => {
     const config = loadBrainConfig();
     assert.equal(config.models.luna, "gpt-5.6-luna");
