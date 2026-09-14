@@ -19,6 +19,10 @@ export class OpenAIResponsesProvider implements BrainProvider {
       throw new Error("BIORICHE BRAIN requires OPENAI_API_KEY at runtime; no key is stored in the repository.");
     }
 
+    if (request.tier === "astra" && !this.config.astraEnabled) {
+      throw new Error("GPT-6 Astra is disabled by default. Set BIORICHE_BRAIN_ASTRA_ENABLED=true only for an explicitly approved pilot.");
+    }
+
     const model = this.config.models[request.tier];
     const feedback = request.qaFeedback
       ? `\n\nQA feedback from the previous attempt:\n${request.qaFeedback}`
@@ -34,7 +38,7 @@ export class OpenAIResponsesProvider implements BrainProvider {
       reasoning: { effort: this.config.reasoningEffort },
     };
 
-    // Fast mode is intentionally opt-in. Astra does not support Fast mode with EU data residency.
+    // Fast mode is intentionally opt-in and never applies to Astra.
     if (this.config.fastMode && request.tier !== "astra") {
       body.service_tier = "fast";
     }
