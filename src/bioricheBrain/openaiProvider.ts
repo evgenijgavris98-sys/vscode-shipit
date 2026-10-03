@@ -1,4 +1,4 @@
-import { Agent, run, setDefaultOpenAIKey } from "@openai/agents";
+import { Agent, RunState, run, setDefaultOpenAIKey } from "@openai/agents";
 import type { AgentRequest, BrainAgent, BrainProvider } from "./types";
 import type { BrainConfig } from "./config";
 import { createBrainTools } from "./runtimeTools";
@@ -6,6 +6,7 @@ import { DenyByDefaultApprovalGate, type ApprovalGate } from "./approvalGate";
 import { MemoryAuditSink, type AuditSink } from "./auditLog";
 import { createAgentDelegationTools } from "./agentDelegation";
 import { createBioricheMcpServer } from "./mcpRegistry";
+import { CheckpointStore } from "./checkpointStore";
 
 const ROLE_INSTRUCTIONS: Record<BrainAgent, string> = {
   orchestrator: "You are ORCHESTRATOR for BIORICHEBRAIN. Task decomposition, routing, delegation, synthesis. Work only within assigned scope; distinguish sourced facts, supplier claims, project hypotheses, validated results, and patent candidates. Do not invent data, approvals, or experimental outcomes. Avoid medical claims. Escalate safety, legal, regulatory, privacy, and irreversible actions for human review.",
@@ -42,11 +43,13 @@ export class OpenAIResponsesProvider implements BrainProvider {
   private readonly workspaceRoot?: string;
   private readonly approvalGate: ApprovalGate;
   private readonly audit: AuditSink;
+  private readonly checkpoints?: CheckpointStore;
 
   public constructor(private readonly config: BrainConfig, options: BrainRuntimeOptions = {}) {
     this.workspaceRoot = options.workspaceRoot;
     this.approvalGate = options.approvalGate ?? new DenyByDefaultApprovalGate();
     this.audit = options.audit ?? new MemoryAuditSink();
+    this.checkpoints = this.workspaceRoot ? new CheckpointStore(this.workspaceRoot) : undefined;
   }
 
   public async run(agent: BrainAgent, request: AgentRequest): Promise<string> {
@@ -96,9 +99,58 @@ export class OpenAIResponsesProvider implements BrainProvider {
       if (mcpServer) await mcpServer.close();
     }
 
+    if (result.interruptions?.length && this.checkpoints) {
+      const id = `run-${Date.now()}`;
+      await this.checkpoints.save({
+        version: 1,
+        id,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        agent,
+        task: request.task.input,
+        provider: "openai",
+        state: result.state.toString(),
+      });
+    }
+
     if (!result.finalOutput) {
       throw new Error("OpenAI Agents SDK returned no final output.");
     }
+    return result.finalOutput;
+  }
+
+  public async listCheckpoints() {
+    return this.checkpoints?.list() ?? [];
+  }
+
+  public async resumeCheckpoint(agent: BrainAgent, checkpointId: string): Promise<string> {
+    if (!this.checkpoints) throw new Error("Checkpoint resume requires a workspace.");
+    if (!this.config.apiKey) throw new Error("BIORICHEBRAIN requires OPENAI_API_KEY.");
+    setDefaultOpenAIKey(this.config.apiKey);
+    const checkpoint = await this.checkpoints.load(checkpointId);
+    if (checkpoint.agent !== agent) throw new Error("Checkpoint belongs to a different agent.");
+    const brainAgent = new Agent({
+      name: `BIORICHEBRAIN — ${agent}`,
+      instructions: ROLE_INSTRUCTIONS[agent],
+      model: this.config.models.terra,
+      tools: [
+        ...createBrainTools(agent, this.workspaceRoot!, this.approvalGate, this.audit),
+        ...(agent === "orchestrator" ? createAgentDelegationTools(this.config, this.workspaceRoot, this.approvalGate, this.audit) : []),
+      ],
+      modelSettings: {
+        reasoning: { effort: this.config.reasoningEffort },
+        timeoutMs: 120_000,
+        text: { verbosity: "medium" },
+      },
+    });
+    const state = await RunState.fromString(brainAgent, checkpoint.state);
+    const result = await run(brainAgent, state, { maxTurns: agent === "orchestrator" ? 10 : 8 });
+    if (result.interruptions?.length) {
+      await this.checkpoints.save({ ...checkpoint, updatedAt: new Date().toISOString(), state: result.state.toString() });
+    } else {
+      await this.checkpoints.remove(checkpointId);
+    }
+    if (!result.finalOutput) throw new Error("Resumed run returned no final output.");
     return result.finalOutput;
   }
 }
