@@ -60,7 +60,6 @@ export function createAgentDelegationTools(
       parameters: z.object({
         input: z.string().min(1).max(12_000),
       }),
-      inputBuilder: ({ input }) => input,
       runOptions: { maxTurns: 6 },
     });
   });
