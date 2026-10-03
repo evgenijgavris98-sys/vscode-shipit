@@ -133,8 +133,8 @@ class ShipItExtension {
                     vscode.window.showErrorMessage('BIORICHEBRAIN: OPENAI_API_KEY is missing in the extension host environment.');
                     return;
                 }
-                if (config.provider === 'kimi' && !config.kimiApiKey) {
-                    vscode.window.showErrorMessage('BIORICHEBRAIN: KIMI_API_KEY is missing in the extension host environment.');
+                if (config.provider === 'kimi' && !config.kimiApiKey && !config.kimiMcpUrl) {
+                    vscode.window.showErrorMessage('BIORICHEBRAIN: configure KIMI_API_KEY or KIMI_MCP_URL for Kimi execution.');
                     return;
                 }
                 const agent = await vscode.window.showQuickPick(
@@ -188,7 +188,7 @@ class ShipItExtension {
                 this.context.subscriptions.push(output);
                 output.show(true);
                 try {
-                    const provider = new OpenAIResponsesProvider(config);
+                    const provider = this.createBrainProvider(config);
                     const team = new TeamOrchestrator(provider);
                     const result = await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: 'BIORICHEBRAIN: orchestrating team', cancellable: false }, () => team.run(task.trim()));
                     output.appendLine('Delegation plan:');

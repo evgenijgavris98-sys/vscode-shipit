@@ -1,3 +1,4 @@
+import { spawn } from "node:child_process";
 import type { AgentRequest, BrainAgent, BrainProvider } from "./types";
 import type { BrainConfig } from "./config";
 
@@ -26,10 +27,73 @@ const ROLE_INSTRUCTIONS: Record<BrainAgent, string> = {
   zozh_specialist: "You are ZOZH SPECIALIST for BIORICHEBRAIN. Prepare evidence-grounded wellness content without medical claims.",
 };
 
+const RISKY_MCP_TOOL = /(^|_)(write|edit|delete|remove|create|update|execute|run|deploy|submit|purchase|buy|commit|push|merge|send|post)(_|$)/i;
+
+function runKimiCli(config: BrainConfig, prompt: string, cwd?: string): Promise<string> {
+  if (!config.kimiMcpUrl || config.kimiMcpTools.length === 0) {
+    throw new Error("Kimi MCP bridge requires KIMI_MCP_URL and KIMI_MCP_TOOLS. The allowlist must contain read-only tools.");
+  }
+  const risky = config.kimiMcpTools.filter((tool) => RISKY_MCP_TOOL.test(tool));
+  if (risky.length > 0) {
+    throw new Error(`Kimi MCP bridge rejected potentially mutating tools: ${risky.join(", ")}. Keep KIMI_MCP_TOOLS read-only.`);
+  }
+
+  const mcpConfig = JSON.stringify({
+    mcpServers: {
+      biorichebrain: {
+        url: config.kimiMcpUrl,
+        enabledTools: config.kimiMcpTools,
+        disabledTools: [],
+      },
+    },
+  });
+
+  return new Promise((resolve, reject) => {
+    const child = spawn(
+      config.kimiCliPath,
+      ["-p", "--quiet", "--mcp-config", mcpConfig, "--max-steps-per-turn", "8", prompt],
+      { cwd, env: process.env },
+    );
+    let stdout = "";
+    let stderr = "";
+    const timeout = setTimeout(() => {
+      child.kill("SIGTERM");
+      reject(new Error("Kimi Code MCP run timed out after 120 seconds."));
+    }, 120_000);
+
+    child.stdout.on("data", (chunk: Buffer) => { stdout += chunk.toString(); });
+    child.stderr.on("data", (chunk: Buffer) => { stderr += chunk.toString(); });
+    child.on("error", (error) => {
+      clearTimeout(timeout);
+      reject(new Error(`Unable to start Kimi Code CLI: ${error.message}`));
+    });
+    child.on("close", (code) => {
+      clearTimeout(timeout);
+      if (code !== 0) {
+        reject(new Error(`Kimi Code CLI exited with code ${code}: ${stderr.trim().slice(0, 1000)}`));
+        return;
+      }
+      const output = stdout.trim();
+      if (!output) {
+        reject(new Error("Kimi Code CLI returned no final output."));
+        return;
+      }
+      resolve(output);
+    });
+  });
+}
+
 export class KimiProvider implements BrainProvider {
   public constructor(private readonly config: BrainConfig) {}
 
   public async run(agent: BrainAgent, request: AgentRequest): Promise<string> {
+    const feedback = request.qaFeedback ? `\n\nQA feedback from the previous attempt:\n${request.qaFeedback}` : "";
+    const prompt = `${ROLE_INSTRUCTIONS[agent]}\n\nTask:\n${request.task.input}${feedback}\n\nUse only approved/read-only MCP capabilities. Do not perform external writes, purchases, deployments, legal submissions, or irreversible actions.`;
+
+    if (this.config.kimiMcpUrl) {
+      return runKimiCli(this.config, prompt, process.cwd());
+    }
+
     if (!this.config.kimiApiKey) {
       throw new Error("BIORICHEBRAIN Kimi provider requires KIMI_API_KEY; no key is stored in the repository.");
     }
@@ -47,7 +111,7 @@ export class KimiProvider implements BrainProvider {
           model: this.config.kimiModel,
           messages: [
             { role: "system", content: ROLE_INSTRUCTIONS[agent] + " Work only within the assigned task. Avoid medical claims. Escalate legal, regulatory, privacy and irreversible actions for human approval." },
-            { role: "user", content: request.qaFeedback ? `${request.task.input}\n\nQA feedback:\n${request.qaFeedback}` : request.task.input },
+            { role: "user", content: `${request.task.input}${feedback}` },
           ],
           max_tokens: 8192,
         }),
