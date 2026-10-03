@@ -18,6 +18,9 @@ export interface BrainConfig {
   kimiApiKey?: string;
   kimiBaseUrl: string;
   kimiModel: string;
+  kimiCliPath: string;
+  kimiMcpUrl?: string;
+  kimiMcpTools: string[];
   models: Record<ModelTier, string>;
   reasoningEffort: ReasoningEffort;
   fastMode: boolean;
@@ -58,6 +61,9 @@ export function loadBrainConfig(enabledOverride?: boolean): BrainConfig {
     kimiApiKey: env("KIMI_API_KEY"),
     kimiBaseUrl: env("KIMI_BASE_URL") ?? "https://api.kimi.com/coding/v1",
     kimiModel: env("KIMI_MODEL") ?? "kimi-k2.5",
+    kimiCliPath: env("KIMI_CLI_PATH") ?? "kimi",
+    kimiMcpUrl: env("KIMI_MCP_URL"),
+    kimiMcpTools: (env("KIMI_MCP_TOOLS") ?? "").split(",").map((v) => v.trim()).filter(Boolean),
     models: {
       luna: env("BIORICHE_BRAIN_MODEL_LUNA") ?? DEFAULT_MODELS.luna,
       terra: env("BIORICHE_BRAIN_MODEL_TERRA") ?? DEFAULT_MODELS.terra,
