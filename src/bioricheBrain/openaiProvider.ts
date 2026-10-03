@@ -1,6 +1,9 @@
 import { Agent, run, setDefaultOpenAIKey } from "@openai/agents";
 import type { AgentRequest, BrainAgent, BrainProvider } from "./types";
 import type { BrainConfig } from "./config";
+import { createBrainTools } from "./runtimeTools";
+import { DenyByDefaultApprovalGate, type ApprovalGate } from "./approvalGate";
+import { MemoryAuditSink, type AuditSink } from "./auditLog";
 
 const ROLE_INSTRUCTIONS: Record<BrainAgent, string> = {
   orchestrator: "You are ORCHESTRATOR for BIORICHEBRAIN. Task decomposition, routing, delegation, synthesis. Work only within assigned scope; distinguish sourced facts, supplier claims, project hypotheses, validated results, and patent candidates. Do not invent data, approvals, or experimental outcomes. Avoid medical claims. Escalate safety, legal, regulatory, privacy, and irreversible actions for human review.",
@@ -27,8 +30,22 @@ const ROLE_INSTRUCTIONS: Record<BrainAgent, string> = {
   zozh_specialist: "You are ZOZH SPECIALIST for BIORICHEBRAIN. Wellness content with evidence and claims guardrails. Work only within assigned scope; distinguish sourced facts, supplier claims, project hypotheses, validated results, and patent candidates. Do not invent data, approvals, or experimental outcomes. Avoid medical claims. Escalate safety, legal, regulatory, privacy, and irreversible actions for human review.",
 };
 
+export interface BrainRuntimeOptions {
+  workspaceRoot?: string;
+  approvalGate?: ApprovalGate;
+  audit?: AuditSink;
+}
+
 export class OpenAIResponsesProvider implements BrainProvider {
-  public constructor(private readonly config: BrainConfig) {}
+  private readonly workspaceRoot?: string;
+  private readonly approvalGate: ApprovalGate;
+  private readonly audit: AuditSink;
+
+  public constructor(private readonly config: BrainConfig, options: BrainRuntimeOptions = {}) {
+    this.workspaceRoot = options.workspaceRoot;
+    this.approvalGate = options.approvalGate ?? new DenyByDefaultApprovalGate();
+    this.audit = options.audit ?? new MemoryAuditSink();
+  }
 
   public async run(agent: BrainAgent, request: AgentRequest): Promise<string> {
     if (!this.config.apiKey) {
@@ -47,6 +64,9 @@ export class OpenAIResponsesProvider implements BrainProvider {
       name: `BIORICHEBRAIN — ${agent}`,
       instructions: ROLE_INSTRUCTIONS[agent],
       model,
+      tools: this.workspaceRoot
+        ? createBrainTools(agent, this.workspaceRoot, this.approvalGate, this.audit)
+        : [],
       modelSettings: {
         reasoning: { effort: this.config.reasoningEffort },
         timeoutMs: 120_000,

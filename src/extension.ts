@@ -4,6 +4,8 @@ import { loadBrainConfig } from './bioricheBrain/config';
 import { OpenAIResponsesProvider } from './bioricheBrain/openaiProvider';
 import { TeamOrchestrator } from './bioricheBrain/teamOrchestrator';
 import type { BrainAgent, ModelTier } from './bioricheBrain/types';
+import { VscodeApprovalGate } from './bioricheBrain/vscodeApprovalGate';
+import { MemoryAuditSink } from './bioricheBrain/auditLog';
 import { ShipItStatusBar } from './statusBar';
 import { LoopOrchestrator } from './orchestrator';
 import { ShipItSidebarProvider } from './sidebarProvider';
@@ -14,6 +16,8 @@ import { getTaskStatsAsync, getNextTaskAsync, createManualPrdAsync, readProjectD
  * Main ShipIt extension class
  */
 class ShipItExtension {
+    private readonly approvalGate = new VscodeApprovalGate();
+    private readonly audit = new MemoryAuditSink();
     private statusBar: ShipItStatusBar;
     private orchestrator: LoopOrchestrator;
     private sidebarProvider: ShipItSidebarProvider;
@@ -147,7 +151,7 @@ class ShipItExtension {
                 output.appendLine(`Model tier: ${tier.id}`);
                 output.appendLine('Running…');
                 try {
-                    const provider = new OpenAIResponsesProvider(config);
+                    const provider = this.createBrainProvider(config);
                     const result = await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: `BIORICHEBRAIN: ${agent.label}`, cancellable: false }, () => provider.run(agent.id as BrainAgent, { tier: tier.id, task: { input: task.trim() } }));
                     output.appendLine('');
                     output.appendLine(result);
@@ -203,6 +207,14 @@ class ShipItExtension {
                 }
             })
         );
+    }
+
+    private createBrainProvider(config: ReturnType<typeof loadBrainConfig>): OpenAIResponsesProvider {
+        return new OpenAIResponsesProvider(config, {
+            workspaceRoot: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath,
+            approvalGate: this.approvalGate,
+            audit: this.audit,
+        });
     }
 
     /**
