@@ -1,13 +1,13 @@
 import type { ModelTier } from "./types";
 
 const DEFAULT_MODELS: Record<ModelTier, string> = {
-  luna: "gpt-5.6-luna",
+  luna: "gpt-6-luna",
   terra: "gpt-5.6-terra",
-  sol: "gpt-5.6-sol",
+  sol: "gpt-6.1-sol",
   astra: "gpt-6-astra",
 };
 
-export type ReasoningEffort = "low" | "medium" | "high" | "xhigh";
+export type ReasoningEffort = "low" | "medium" | "high" | "xhigh" | "max";
 
 export interface BrainConfig {
   enabled: boolean;
@@ -26,7 +26,7 @@ function env(name: string): string | undefined {
 
 function reasoningEffort(): ReasoningEffort {
   const value = env("BIORICHE_BRAIN_REASONING_EFFORT");
-  return value === "low" || value === "high" || value === "xhigh" ? value : "medium";
+  return value === "low" || value === "high" || value === "xhigh" || value === "max" ? value : "medium";
 }
 
 function booleanEnv(name: string, fallback: boolean): boolean {
@@ -48,7 +48,7 @@ export function loadBrainConfig(): BrainConfig {
     },
     reasoningEffort: reasoningEffort(),
     fastMode: booleanEnv("BIORICHE_BRAIN_FAST_MODE", false),
-    // Astra is a separate frontier tier and must never be enabled accidentally.
+    // Frontier usage is explicit opt-in; routine work should route to Sol/Luna.
     astraEnabled: booleanEnv("BIORICHE_BRAIN_ASTRA_ENABLED", false),
     maxQaRetries: Math.min(3, Math.max(0, Number(env("BIORICHE_BRAIN_MAX_QA_RETRIES") ?? "1"))),
   };
