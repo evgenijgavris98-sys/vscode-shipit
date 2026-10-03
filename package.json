@@ -142,6 +142,11 @@
           "type": "string",
           "default": "gpt-5-mini",
           "description": "Model to use for task/user story implementation"
+        },
+        "shipit.bioricheBrain.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable BIORICHEBRAIN agent execution. Requires OPENAI_API_KEY in the extension host environment."
         }
       }
     }
