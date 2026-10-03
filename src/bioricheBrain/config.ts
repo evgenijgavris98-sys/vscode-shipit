@@ -9,9 +9,15 @@ const DEFAULT_MODELS: Record<ModelTier, string> = {
 
 export type ReasoningEffort = "low" | "medium" | "high" | "xhigh" | "max";
 
+export type BrainProviderId = "openai" | "kimi";
+
 export interface BrainConfig {
   enabled: boolean;
+  provider: BrainProviderId;
   apiKey?: string;
+  kimiApiKey?: string;
+  kimiBaseUrl: string;
+  kimiModel: string;
   models: Record<ModelTier, string>;
   reasoningEffort: ReasoningEffort;
   fastMode: boolean;
@@ -48,6 +54,10 @@ export function loadBrainConfig(enabledOverride?: boolean): BrainConfig {
   return {
     enabled: enabledOverride ?? booleanEnv("BIORICHE_BRAIN_ENABLED", false),
     apiKey: env("OPENAI_API_KEY"),
+    provider: env("BIORICHE_BRAIN_PROVIDER") === "kimi" ? "kimi" : "openai",
+    kimiApiKey: env("KIMI_API_KEY"),
+    kimiBaseUrl: env("KIMI_BASE_URL") ?? "https://api.kimi.com/coding/v1",
+    kimiModel: env("KIMI_MODEL") ?? "kimi-k2.5",
     models: {
       luna: env("BIORICHE_BRAIN_MODEL_LUNA") ?? DEFAULT_MODELS.luna,
       terra: env("BIORICHE_BRAIN_MODEL_TERRA") ?? DEFAULT_MODELS.terra,
