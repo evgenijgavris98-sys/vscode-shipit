@@ -47,12 +47,12 @@ export class OpenAIResponsesProvider implements BrainProvider {
       instructions: ROLE_INSTRUCTIONS[agent],
       input: `${request.task.input}${feedback}`,
       prompt_cache_key: `biorichebrain:${agent}:v2`,
-      parallel_tool_calls: true,
       reasoning: { effort: this.config.reasoningEffort },
     };
     if (this.config.fastMode && request.tier !== "astra") body.service_tier = "fast";
     const response = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
+      signal: AbortSignal.timeout(120_000),
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${this.config.apiKey}` },
       body: JSON.stringify(body),
     });

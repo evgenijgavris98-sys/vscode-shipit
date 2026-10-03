@@ -1,9 +1,9 @@
 import type { ModelTier } from "./types";
 
 const DEFAULT_MODELS: Record<ModelTier, string> = {
-  luna: "gpt-6-luna",
+  luna: "gpt-5.6-luna",
   terra: "gpt-5.6-terra",
-  sol: "gpt-6.1-sol",
+  sol: "gpt-5.6-sol",
   astra: "gpt-6-astra",
 };
 
@@ -36,9 +36,17 @@ function booleanEnv(name: string, fallback: boolean): boolean {
   return fallback;
 }
 
-export function loadBrainConfig(): BrainConfig {
+function qaRetries(): number {
+  const raw = env("BIORICHE_BRAIN_MAX_QA_RETRIES");
+  if (!raw) return 1;
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed)) return 1;
+  return Math.min(3, Math.max(0, Math.floor(parsed)));
+}
+
+export function loadBrainConfig(enabledOverride?: boolean): BrainConfig {
   return {
-    enabled: booleanEnv("BIORICHE_BRAIN_ENABLED", false),
+    enabled: enabledOverride ?? booleanEnv("BIORICHE_BRAIN_ENABLED", false),
     apiKey: env("OPENAI_API_KEY"),
     models: {
       luna: env("BIORICHE_BRAIN_MODEL_LUNA") ?? DEFAULT_MODELS.luna,
@@ -48,8 +56,7 @@ export function loadBrainConfig(): BrainConfig {
     },
     reasoningEffort: reasoningEffort(),
     fastMode: booleanEnv("BIORICHE_BRAIN_FAST_MODE", false),
-    // Frontier usage is explicit opt-in; routine work should route to Sol/Luna.
     astraEnabled: booleanEnv("BIORICHE_BRAIN_ASTRA_ENABLED", false),
-    maxQaRetries: Math.min(3, Math.max(0, Number(env("BIORICHE_BRAIN_MAX_QA_RETRIES") ?? "1"))),
+    maxQaRetries: qaRetries(),
   };
 }
