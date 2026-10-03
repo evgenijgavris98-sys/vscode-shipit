@@ -1,3 +1,4 @@
+import { Agent, run, setDefaultOpenAIKey } from "@openai/agents";
 import type { AgentRequest, BrainAgent, BrainProvider } from "./types";
 import type { BrainConfig } from "./config";
 
@@ -26,10 +27,6 @@ const ROLE_INSTRUCTIONS: Record<BrainAgent, string> = {
   zozh_specialist: "You are ZOZH SPECIALIST for BIORICHEBRAIN. Wellness content with evidence and claims guardrails. Work only within assigned scope; distinguish sourced facts, supplier claims, project hypotheses, validated results, and patent candidates. Do not invent data, approvals, or experimental outcomes. Avoid medical claims. Escalate safety, legal, regulatory, privacy, and irreversible actions for human review.",
 };
 
-interface ResponsesApiResult {
-  output_text?: string;
-}
-
 export class OpenAIResponsesProvider implements BrainProvider {
   public constructor(private readonly config: BrainConfig) {}
 
@@ -40,28 +37,32 @@ export class OpenAIResponsesProvider implements BrainProvider {
     if (request.tier === "astra" && !this.config.astraEnabled) {
       throw new Error("GPT-6 Astra is disabled by default. Enable only for an explicitly approved critical task.");
     }
-    const model = this.config.models[request.tier];
+
+    setDefaultOpenAIKey(this.config.apiKey);
+
     const feedback = request.qaFeedback ? `\n\nQA feedback from the previous attempt:\n${request.qaFeedback}` : "";
-    const body: Record<string, unknown> = {
-      model,
+    const model = this.config.models[request.tier];
+
+    const brainAgent = new Agent({
+      name: `BIORICHEBRAIN — ${agent}`,
       instructions: ROLE_INSTRUCTIONS[agent],
-      input: `${request.task.input}${feedback}`,
-      prompt_cache_key: `biorichebrain:${agent}:v2`,
-      reasoning: { effort: this.config.reasoningEffort },
-    };
-    if (this.config.fastMode && request.tier !== "astra") body.service_tier = "fast";
-    const response = await fetch("https://api.openai.com/v1/responses", {
-      method: "POST",
-      signal: AbortSignal.timeout(120_000),
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${this.config.apiKey}` },
-      body: JSON.stringify(body),
+      model,
+      modelSettings: {
+        reasoning: { effort: this.config.reasoningEffort },
+        timeoutMs: 120_000,
+        text: { verbosity: "medium" },
+      },
     });
-    if (!response.ok) {
-      const detail = await response.text();
-      throw new Error(`OpenAI Responses API request failed (${response.status}): ${detail.slice(0, 500)}`);
+
+    const result = await run(
+      brainAgent,
+      `${request.task.input}${feedback}`,
+      { maxTurns: 8 },
+    );
+
+    if (!result.finalOutput) {
+      throw new Error("OpenAI Agents SDK returned no final output.");
     }
-    const data = (await response.json()) as ResponsesApiResult;
-    if (!data.output_text) throw new Error("OpenAI Responses API returned no output_text.");
-    return data.output_text;
+    return result.finalOutput;
   }
 }
