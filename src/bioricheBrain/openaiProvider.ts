@@ -4,6 +4,8 @@ import type { BrainConfig } from "./config";
 import { createBrainTools } from "./runtimeTools";
 import { DenyByDefaultApprovalGate, type ApprovalGate } from "./approvalGate";
 import { MemoryAuditSink, type AuditSink } from "./auditLog";
+import { createAgentDelegationTools } from "./agentDelegation";
+import { createBioricheMcpServer } from "./mcpRegistry";
 
 const ROLE_INSTRUCTIONS: Record<BrainAgent, string> = {
   orchestrator: "You are ORCHESTRATOR for BIORICHEBRAIN. Task decomposition, routing, delegation, synthesis. Work only within assigned scope; distinguish sourced facts, supplier claims, project hypotheses, validated results, and patent candidates. Do not invent data, approvals, or experimental outcomes. Avoid medical claims. Escalate safety, legal, regulatory, privacy, and irreversible actions for human review.",
@@ -60,13 +62,22 @@ export class OpenAIResponsesProvider implements BrainProvider {
     const feedback = request.qaFeedback ? `\n\nQA feedback from the previous attempt:\n${request.qaFeedback}` : "";
     const model = this.config.models[request.tier];
 
+    const mcpServer = createBioricheMcpServer();
+    if (mcpServer) await mcpServer.connect();
+
     const brainAgent = new Agent({
       name: `BIORICHEBRAIN — ${agent}`,
       instructions: ROLE_INSTRUCTIONS[agent],
       model,
-      tools: this.workspaceRoot
-        ? createBrainTools(agent, this.workspaceRoot, this.approvalGate, this.audit)
-        : [],
+      tools: [
+        ...(this.workspaceRoot
+          ? createBrainTools(agent, this.workspaceRoot, this.approvalGate, this.audit)
+          : []),
+        ...(agent === "orchestrator"
+          ? createAgentDelegationTools(this.config, this.workspaceRoot, this.approvalGate, this.audit)
+          : []),
+      ],
+      mcpServers: mcpServer ? [mcpServer] : [],
       modelSettings: {
         reasoning: { effort: this.config.reasoningEffort },
         timeoutMs: 120_000,
@@ -74,11 +85,16 @@ export class OpenAIResponsesProvider implements BrainProvider {
       },
     });
 
-    const result = await run(
-      brainAgent,
-      `${request.task.input}${feedback}`,
-      { maxTurns: 8 },
-    );
+    let result;
+    try {
+      result = await run(
+        brainAgent,
+        `${request.task.input}${feedback}`,
+        { maxTurns: agent === "orchestrator" ? 10 : 8 },
+      );
+    } finally {
+      if (mcpServer) await mcpServer.close();
+    }
 
     if (!result.finalOutput) {
       throw new Error("OpenAI Agents SDK returned no final output.");
