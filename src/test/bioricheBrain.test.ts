@@ -1,5 +1,6 @@
 import * as assert from "node:assert/strict";
 import { loadBrainConfig } from "../bioricheBrain/config";
+import { AGENT_REGISTRY } from "../bioricheBrain/agentRegistry";
 
 declare const suite: (name: string, fn: () => void) => void;
 declare const test: (name: string, fn: () => void) => void;
@@ -39,4 +40,21 @@ suite("BIORICHE BRAIN configuration", () => {
     else process.env.BIORICHE_BRAIN_MAX_QA_RETRIES = previous;
     assert.equal(config.maxQaRetries, 3);
   });
+});
+
+
+test("falls back safely for malformed QA retry values", () => {
+  const previous = process.env.BIORICHE_BRAIN_MAX_QA_RETRIES;
+  process.env.BIORICHE_BRAIN_MAX_QA_RETRIES = "not-a-number";
+  try {
+    assert.equal(loadBrainConfig().maxQaRetries, 1);
+  } finally {
+    if (previous === undefined) delete process.env.BIORICHE_BRAIN_MAX_QA_RETRIES;
+    else process.env.BIORICHE_BRAIN_MAX_QA_RETRIES = previous;
+  }
+});
+
+test("registers exactly 22 uniquely identified BIORICHEBRAIN agents", () => {
+  assert.equal(AGENT_REGISTRY.length, 22);
+  assert.equal(new Set(AGENT_REGISTRY.map((agent) => agent.id)).size, 22);
 });
