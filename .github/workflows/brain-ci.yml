@@ -19,6 +19,7 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - run: npm install --package-lock-only --ignore-scripts
       - run: npm ci
       - run: npm run compile
       - run: npm run lint
