@@ -2,6 +2,8 @@ import * as vscode from 'vscode';
 import { AGENT_REGISTRY } from './bioricheBrain/agentRegistry';
 import { loadBrainConfig } from './bioricheBrain/config';
 import { OpenAIResponsesProvider } from './bioricheBrain/openaiProvider';
+import { KimiProvider } from './bioricheBrain/kimiProvider';
+import type { BrainProvider } from './bioricheBrain/types';
 import { TeamOrchestrator } from './bioricheBrain/teamOrchestrator';
 import type { BrainAgent, ModelTier } from './bioricheBrain/types';
 import { VscodeApprovalGate } from './bioricheBrain/vscodeApprovalGate';
@@ -127,8 +129,12 @@ class ShipItExtension {
                     }
                     return;
                 }
-                if (!config.apiKey) {
+                if (config.provider === 'openai' && !config.apiKey) {
                     vscode.window.showErrorMessage('BIORICHEBRAIN: OPENAI_API_KEY is missing in the extension host environment.');
+                    return;
+                }
+                if (config.provider === 'kimi' && !config.kimiApiKey) {
+                    vscode.window.showErrorMessage('BIORICHEBRAIN: KIMI_API_KEY is missing in the extension host environment.');
                     return;
                 }
                 const agent = await vscode.window.showQuickPick(
@@ -168,8 +174,12 @@ class ShipItExtension {
                     vscode.window.showWarningMessage('BIORICHEBRAIN is disabled. Enable shipit.bioricheBrain.enabled and provide OPENAI_API_KEY.');
                     return;
                 }
-                if (!config.apiKey) {
+                if (config.provider === 'openai' && !config.apiKey) {
                     vscode.window.showErrorMessage('BIORICHEBRAIN: OPENAI_API_KEY is missing in the extension host environment.');
+                    return;
+                }
+                if (config.provider === 'kimi' && !config.kimiApiKey) {
+                    vscode.window.showErrorMessage('BIORICHEBRAIN: KIMI_API_KEY is missing in the extension host environment.');
                     return;
                 }
                 const task = await vscode.window.showInputBox({ prompt: 'Task for the BIORICHEBRAIN team', placeHolder: 'Describe the end-to-end task', ignoreFocusOut: true });
@@ -209,7 +219,8 @@ class ShipItExtension {
         );
     }
 
-    private createBrainProvider(config: ReturnType<typeof loadBrainConfig>): OpenAIResponsesProvider {
+    private createBrainProvider(config: ReturnType<typeof loadBrainConfig>): BrainProvider {
+        if (config.provider === 'kimi') return new KimiProvider(config);
         return new OpenAIResponsesProvider(config, {
             workspaceRoot: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath,
             approvalGate: this.approvalGate,
