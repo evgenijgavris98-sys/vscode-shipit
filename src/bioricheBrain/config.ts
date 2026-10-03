@@ -44,9 +44,9 @@ function qaRetries(): number {
   return Math.min(3, Math.max(0, Math.floor(parsed)));
 }
 
-export function loadBrainConfig(): BrainConfig {
+export function loadBrainConfig(enabledOverride?: boolean): BrainConfig {
   return {
-    enabled: booleanEnv("BIORICHE_BRAIN_ENABLED", false),
+    enabled: enabledOverride ?? booleanEnv("BIORICHE_BRAIN_ENABLED", false),
     apiKey: env("OPENAI_API_KEY"),
     models: {
       luna: env("BIORICHE_BRAIN_MODEL_LUNA") ?? DEFAULT_MODELS.luna,
