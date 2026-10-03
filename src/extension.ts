@@ -1,4 +1,8 @@
 import * as vscode from 'vscode';
+import { AGENT_REGISTRY } from './bioricheBrain/agentRegistry';
+import { loadBrainConfig } from './bioricheBrain/config';
+import { OpenAIResponsesProvider } from './bioricheBrain/openaiProvider';
+import type { BrainAgent, ModelTier } from './bioricheBrain/types';
 import { ShipItStatusBar } from './statusBar';
 import { LoopOrchestrator } from './orchestrator';
 import { ShipItSidebarProvider } from './sidebarProvider';
@@ -104,6 +108,53 @@ class ShipItExtension {
 
             vscode.commands.registerCommand('shipit.generateAllUserStories', async () => {
                 await this.orchestrator.generateAllUserStories();
+            }),
+
+            vscode.commands.registerCommand('bioricheBrain.runAgent', async () => {
+                const config = loadBrainConfig();
+                if (!config.enabled) {
+                    const action = await vscode.window.showWarningMessage(
+                        'BIORICHEBRAIN is disabled. Set BIORICHE_BRAIN_ENABLED=true and OPENAI_API_KEY in the extension host environment, then restart VS Code.',
+                        'Open Documentation'
+                    );
+                    if (action === 'Open Documentation') {
+                        await vscode.env.openExternal(vscode.Uri.parse('https://github.com/evgenijgavris98-sys/vscode-shipit'));
+                    }
+                    return;
+                }
+                if (!config.apiKey) {
+                    vscode.window.showErrorMessage('BIORICHEBRAIN: OPENAI_API_KEY is missing in the extension host environment.');
+                    return;
+                }
+                const agent = await vscode.window.showQuickPick(
+                    AGENT_REGISTRY.map((item) => ({ label: item.name, description: item.purpose, id: item.id })),
+                    { placeHolder: 'Choose a BIORICHEBRAIN agent' }
+                );
+                if (!agent) return;
+                const task = await vscode.window.showInputBox({ prompt: `Task for ${agent.label}`, placeHolder: 'Describe the task', ignoreFocusOut: true });
+                if (!task?.trim()) return;
+                const definition = AGENT_REGISTRY.find((item) => item.id === agent.id);
+                if (!definition) return;
+                const tiers: ModelTier[] = ['luna', 'terra', 'sol'];
+                if (config.astraEnabled) tiers.push('astra');
+                const tier = await vscode.window.showQuickPick(tiers.map((id) => ({ label: id.toUpperCase(), id })), { placeHolder: 'Choose model tier', title: `Default: ${definition.defaultTier.toUpperCase()}` });
+                if (!tier) return;
+                const output = vscode.window.createOutputChannel(`BIORICHEBRAIN — ${agent.label}`);
+                this.context.subscriptions.push(output);
+                output.show(true);
+                output.appendLine(`Agent: ${agent.label}`);
+                output.appendLine(`Model tier: ${tier.id}`);
+                output.appendLine('Running…');
+                try {
+                    const provider = new OpenAIResponsesProvider(config);
+                    const result = await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: `BIORICHEBRAIN: ${agent.label}`, cancellable: false }, () => provider.run(agent.id as BrainAgent, { tier: tier.id, task: { input: task.trim() } }));
+                    output.appendLine('');
+                    output.appendLine(result);
+                } catch (error) {
+                    const message = error instanceof Error ? error.message : String(error);
+                    output.appendLine(`\nERROR: ${message}`);
+                    vscode.window.showErrorMessage(`BIORICHEBRAIN: ${message}`);
+                }
             }),
 
             vscode.commands.registerCommand('shipit.viewLogs', () => {
