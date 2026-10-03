@@ -111,7 +111,7 @@ class ShipItExtension {
             }),
 
             vscode.commands.registerCommand('bioricheBrain.runAgent', async () => {
-                const config = loadBrainConfig();
+                const config = loadBrainConfig(vscode.workspace.getConfiguration('shipit.bioricheBrain').get<boolean>('enabled'));
                 if (!config.enabled) {
                     const action = await vscode.window.showWarningMessage(
                         'BIORICHEBRAIN is disabled. Set BIORICHE_BRAIN_ENABLED=true and OPENAI_API_KEY in the extension host environment, then restart VS Code.',
