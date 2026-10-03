@@ -58,6 +58,10 @@
     },
     "commands": [
       {
+        "command": "bioricheBrain.runTeam",
+        "title": "BIORICHEBRAIN: Run Team"
+      },
+      {
         "command": "bioricheBrain.runAgent",
         "title": "BIORICHEBRAIN: Run Agent"
       },
