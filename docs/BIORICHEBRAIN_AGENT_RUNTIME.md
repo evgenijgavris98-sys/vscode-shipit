@@ -109,3 +109,12 @@ https://github.com/OpenHands/docs/blob/main/sdk/arch/agent.mdx
 
 Agno platform:
 https://github.com/agno-agi/agno
+
+
+## Checkpoint, sandbox and evaluation layer
+
+BIORICHEBRAIN now persists interrupted OpenAI Agents SDK runs as local checkpoints under `.biorichebrain/checkpoints/`. The SDK `RunState` is serialized without tracing credentials and can be restored with `RunState.fromString`; the original agent graph must be rebuilt for safe resume.
+
+DEVOPS has an explicit sandbox command using the Agents SDK `SandboxAgent` and `UnixLocalSandboxClient`. The sandbox is approval-gated and uses a filtered host environment. Unix-local execution is intentionally for trusted local development; stronger isolation should use Docker or a hosted sandbox before untrusted workloads.
+
+A small deterministic evaluation harness covers evidence/claims and approval-gate behavior. Future evaluation can be expanded with the SDK's deterministic testing utilities and tracing/evaluation integrations.
