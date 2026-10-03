@@ -12,6 +12,7 @@ import { ShipItStatusBar } from './statusBar';
 import { LoopOrchestrator } from './orchestrator';
 import { ShipItSidebarProvider } from './sidebarProvider';
 import { log, disposeLogger, showLogs } from './logger';
+import { runDevopsSandbox } from './bioricheBrain/sandboxRunner';
 import { getTaskStatsAsync, getNextTaskAsync, createManualPrdAsync, readProjectDescriptionAsync, createOrOpenProjectDescriptionAsync } from './fileUtils';
 
 /**
@@ -206,6 +207,31 @@ class ShipItExtension {
                     vscode.window.showErrorMessage('BIORICHEBRAIN team: ' + message);
                 }
             }),
+            vscode.commands.registerCommand('bioricheBrain.runSandbox', async () => {
+                const config = loadBrainConfig(vscode.workspace.getConfiguration('shipit.bioricheBrain').get<boolean>('enabled'));
+                if (!config.enabled || config.provider !== 'openai' || !config.apiKey) {
+                    vscode.window.showErrorMessage('BIORICHEBRAIN sandbox requires the OpenAI provider, BIORICHE_BRAIN_ENABLED=true and OPENAI_API_KEY.');
+                    return;
+                }
+                const task = await vscode.window.showInputBox({ prompt: 'DEVOPS sandbox task', placeHolder: 'Inspect, edit and test only inside the sandbox workspace', ignoreFocusOut: true });
+                if (!task?.trim()) return;
+                const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+                if (!workspaceRoot) { vscode.window.showErrorMessage('Open a BIORICHEBRAIN workspace first.'); return; }
+                try {
+                    const result = await vscode.window.withProgress(
+                        { location: vscode.ProgressLocation.Notification, title: 'BIORICHEBRAIN: DEVOPS sandbox', cancellable: false },
+                        () => runDevopsSandbox(config, workspaceRoot, task.trim(), this.approvalGate, this.audit),
+                    );
+                    const output = vscode.window.createOutputChannel('BIORICHEBRAIN — Sandbox');
+                    this.context.subscriptions.push(output);
+                    output.show(true);
+                    output.appendLine(result.output);
+                } catch (error) {
+                    const message = error instanceof Error ? error.message : String(error);
+                    vscode.window.showErrorMessage('BIORICHEBRAIN sandbox: ' + message);
+                }
+            }),
+
             vscode.commands.registerCommand('shipit.viewLogs', () => {
                 showLogs();
             }),
