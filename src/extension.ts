@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { AGENT_REGISTRY } from './bioricheBrain/agentRegistry';
 import { loadBrainConfig } from './bioricheBrain/config';
 import { OpenAIResponsesProvider } from './bioricheBrain/openaiProvider';
+import { TeamOrchestrator } from './bioricheBrain/teamOrchestrator';
 import type { BrainAgent, ModelTier } from './bioricheBrain/types';
 import { ShipItStatusBar } from './statusBar';
 import { LoopOrchestrator } from './orchestrator';
@@ -157,6 +158,40 @@ class ShipItExtension {
                 }
             }),
 
+            vscode.commands.registerCommand('bioricheBrain.runTeam', async () => {
+                const config = loadBrainConfig(vscode.workspace.getConfiguration('shipit.bioricheBrain').get<boolean>('enabled'));
+                if (!config.enabled) {
+                    vscode.window.showWarningMessage('BIORICHEBRAIN is disabled. Enable shipit.bioricheBrain.enabled and provide OPENAI_API_KEY.');
+                    return;
+                }
+                if (!config.apiKey) {
+                    vscode.window.showErrorMessage('BIORICHEBRAIN: OPENAI_API_KEY is missing in the extension host environment.');
+                    return;
+                }
+                const task = await vscode.window.showInputBox({ prompt: 'Task for the BIORICHEBRAIN team', placeHolder: 'Describe the end-to-end task', ignoreFocusOut: true });
+                if (!task?.trim()) return;
+                const output = vscode.window.createOutputChannel('BIORICHEBRAIN — Team');
+                this.context.subscriptions.push(output);
+                output.show(true);
+                try {
+                    const provider = new OpenAIResponsesProvider(config);
+                    const team = new TeamOrchestrator(provider);
+                    const result = await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: 'BIORICHEBRAIN: orchestrating team', cancellable: false }, () => team.run(task.trim()));
+                    output.appendLine('Delegation plan:');
+                    result.plan.tasks.forEach((item, index) => output.appendLine((index + 1) + '. ' + item.agent + ' [' + item.tier + '] — ' + item.task));
+                    output.appendLine('\nAgent results:');
+                    result.results.forEach((item, index) => {
+                        output.appendLine('\n[' + (index + 1) + '] ' + item.agent);
+                        output.appendLine(item.error ? 'ERROR: ' + item.error : (item.output ?? 'No output'));
+                    });
+                    output.appendLine('\nSYNTHESIS:\n');
+                    output.appendLine(result.synthesis);
+                } catch (error) {
+                    const message = error instanceof Error ? error.message : String(error);
+                    output.appendLine('ERROR: ' + message);
+                    vscode.window.showErrorMessage('BIORICHEBRAIN team: ' + message);
+                }
+            }),
             vscode.commands.registerCommand('shipit.viewLogs', () => {
                 showLogs();
             }),
