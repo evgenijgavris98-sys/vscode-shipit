@@ -37,7 +37,7 @@ export class KimiProvider implements BrainProvider {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 120_000);
     try {
-      const response = await fetch(`${this.config.kimiBaseUrl.replace(/\\/$/, "")}/chat/completions`, {
+      const response = await fetch(`${this.config.kimiBaseUrl.replace(/\/$/, "")}/chat/completions`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${this.config.kimiApiKey}`,
@@ -47,7 +47,7 @@ export class KimiProvider implements BrainProvider {
           model: this.config.kimiModel,
           messages: [
             { role: "system", content: ROLE_INSTRUCTIONS[agent] + " Work only within the assigned task. Avoid medical claims. Escalate legal, regulatory, privacy and irreversible actions for human approval." },
-            { role: "user", content: request.qaFeedback ? `${request.task.input}\\n\\nQA feedback:\\n${request.qaFeedback}` : request.task.input },
+            { role: "user", content: request.qaFeedback ? `${request.task.input}\n\nQA feedback:\n${request.qaFeedback}` : request.task.input },
           ],
           max_tokens: 8192,
         }),
