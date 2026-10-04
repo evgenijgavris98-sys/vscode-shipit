@@ -4,6 +4,8 @@ import { loadBrainConfig } from './bioricheBrain/config';
 import { OpenAIResponsesProvider } from './bioricheBrain/openaiProvider';
 import { KimiProvider } from './bioricheBrain/kimiProvider';
 import { QwenProvider } from './bioricheBrain/qwenProvider';
+import { ClaudeProvider } from './bioricheBrain/claudeProvider';
+import { DeepSeekProvider } from './bioricheBrain/deepseekProvider';
 import type { BrainProvider } from './bioricheBrain/types';
 import { TeamOrchestrator } from './bioricheBrain/teamOrchestrator';
 import type { BrainAgent, ModelTier } from './bioricheBrain/types';
@@ -139,6 +141,10 @@ class ShipItExtension {
                     vscode.window.showErrorMessage('BIORICHEBRAIN: configure KIMI_API_KEY or KIMI_MCP_URL for Kimi execution.');
                     return;
                 }
+                if (config.provider === 'deepseek' && !config.deepseekApiKey) {
+                    vscode.window.showErrorMessage('BIORICHEBRAIN: DEEPSEEK_API_KEY is missing in the extension host environment.');
+                    return;
+                }
                 const agent = await vscode.window.showQuickPick(
                     AGENT_REGISTRY.map((item) => ({ label: item.name, description: item.purpose, id: item.id })),
                     { placeHolder: 'Choose a BIORICHEBRAIN agent' }
@@ -186,6 +192,14 @@ class ShipItExtension {
                 }
                 if (config.provider === 'qwen' && !config.qwenCliPath) {
                     vscode.window.showErrorMessage('BIORICHEBRAIN: QWEN_CLI_PATH is not configured.');
+                    return;
+                }
+                if (config.provider === 'deepseek' && !config.deepseekApiKey) {
+                    vscode.window.showErrorMessage('BIORICHEBRAIN: DEEPSEEK_API_KEY is missing in the extension host environment.');
+                    return;
+                }
+                if (config.provider === 'claude' && !config.claudeCliPath) {
+                    vscode.window.showErrorMessage('BIORICHEBRAIN: CLAUDE_CLI_PATH is not configured.');
                     return;
                 }
                 const task = await vscode.window.showInputBox({ prompt: 'Task for the BIORICHEBRAIN team', placeHolder: 'Describe the end-to-end task', ignoreFocusOut: true });
@@ -253,6 +267,8 @@ class ShipItExtension {
     private createBrainProvider(config: ReturnType<typeof loadBrainConfig>): BrainProvider {
         if (config.provider === 'kimi') return new KimiProvider(config);
         if (config.provider === 'qwen') return new QwenProvider(config);
+        if (config.provider === 'claude') return new ClaudeProvider(config);
+        if (config.provider === 'deepseek') return new DeepSeekProvider(config);
         return new OpenAIResponsesProvider(config, {
             workspaceRoot: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath,
             approvalGate: this.approvalGate,
