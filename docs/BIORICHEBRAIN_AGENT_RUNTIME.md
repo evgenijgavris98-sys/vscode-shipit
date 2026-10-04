@@ -118,3 +118,8 @@ BIORICHEBRAIN now persists interrupted OpenAI Agents SDK runs as local checkpoin
 DEVOPS has an explicit sandbox command using the Agents SDK `SandboxAgent` and `UnixLocalSandboxClient`. The sandbox is approval-gated and uses a filtered host environment. Unix-local execution is intentionally for trusted local development; stronger isolation should use Docker or a hosted sandbox before untrusted workloads.
 
 A small deterministic evaluation harness covers evidence/claims and approval-gate behavior. Future evaluation can be expanded with the SDK's deterministic testing utilities and tracing/evaluation integrations.
+
+
+## Governed DEVOPS pipeline
+
+The `DevopsPipeline` coordinates injected sandbox, QA, GitHub PR, CI, and merge adapters in a strict sequence. It stops on sandbox failure, QA failure, failed CI, adapter errors, or denied approval. Sandbox execution and PR creation require explicit approval; merge has a separate approval request after CI passes. Each approval decision is written to the audit sink. The pipeline itself does not implement GitHub credentials or sandbox isolation: adapters must use the existing capability boundary and a genuinely isolated execution environment for untrusted code. A local Unix sandbox is suitable only for trusted workspaces, not hostile code. PR creation is never treated as merge authorization.
