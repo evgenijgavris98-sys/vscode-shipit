@@ -10,7 +10,7 @@ Environment:
 - `BIORICHE_BRAIN_ENABLED=true`
 - `BIORICHE_BRAIN_PROVIDER=claude`
 - `CLAUDE_CLI_PATH=claude`
-- `CLAUDE_MODEL=claude-sonnet-5-5`
+- `CLAUDE_MODEL=sonnet`
 
 The provider runs Claude Code in print mode with plan permissions and a bounded turn/time budget. It does not use `--dangerously-skip-permissions` or `--yolo`.
 
