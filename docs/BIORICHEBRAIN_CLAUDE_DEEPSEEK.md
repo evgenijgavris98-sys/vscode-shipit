@@ -48,3 +48,7 @@ All providers receive the same BIORICHEBRAIN agent-role guardrails:
 | DeepSeek | API | `deepseek-v4-pro` | `DEEPSEEK_API_KEY` |
 
 The repository does not attempt to install software on the user's phone or computer. The connected GitHub side is prepared; local CLI/API authentication remains on the user's device.
+
+## Automatic routing
+
+Team execution uses the Smart Router. It ranks providers by task type, skips unavailable credentials, and falls back when a provider fails.
