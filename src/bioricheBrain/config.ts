@@ -8,8 +8,7 @@ const DEFAULT_MODELS: Record<ModelTier, string> = {
 };
 
 export type ReasoningEffort = "low" | "medium" | "high" | "xhigh" | "max";
-
-export type BrainProviderId = "openai" | "kimi";
+export type BrainProviderId = "openai" | "kimi" | "qwen";
 
 export interface BrainConfig {
   enabled: boolean;
@@ -21,6 +20,8 @@ export interface BrainConfig {
   kimiCliPath: string;
   kimiMcpUrl?: string;
   kimiMcpTools: string[];
+  qwenCliPath: string;
+  qwenModel: string;
   models: Record<ModelTier, string>;
   reasoningEffort: ReasoningEffort;
   fastMode: boolean;
@@ -54,16 +55,19 @@ function qaRetries(): number {
 }
 
 export function loadBrainConfig(enabledOverride?: boolean): BrainConfig {
+  const provider = env("BIORICHE_BRAIN_PROVIDER");
   return {
     enabled: enabledOverride ?? booleanEnv("BIORICHE_BRAIN_ENABLED", false),
     apiKey: env("OPENAI_API_KEY"),
-    provider: env("BIORICHE_BRAIN_PROVIDER") === "kimi" ? "kimi" : "openai",
+    provider: provider === "kimi" ? "kimi" : provider === "qwen" ? "qwen" : "openai",
     kimiApiKey: env("KIMI_API_KEY"),
     kimiBaseUrl: env("KIMI_BASE_URL") ?? "https://api.kimi.com/coding/v1",
     kimiModel: env("KIMI_MODEL") ?? "kimi-k2.5",
     kimiCliPath: env("KIMI_CLI_PATH") ?? "kimi",
     kimiMcpUrl: env("KIMI_MCP_URL"),
     kimiMcpTools: (env("KIMI_MCP_TOOLS") ?? "").split(",").map((v) => v.trim()).filter(Boolean),
+    qwenCliPath: env("QWEN_CLI_PATH") ?? "qwen",
+    qwenModel: env("QWEN_MODEL") ?? "qwen3-coder-plus",
     models: {
       luna: env("BIORICHE_BRAIN_MODEL_LUNA") ?? DEFAULT_MODELS.luna,
       terra: env("BIORICHE_BRAIN_MODEL_TERRA") ?? DEFAULT_MODELS.terra,
