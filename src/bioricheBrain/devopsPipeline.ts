@@ -19,7 +19,7 @@ export interface DevopsPipelineAdapter {
   mergePullRequest(pullRequestId: string): Promise<void>;
 }
 const stageTool: Record<PipelineStage, string> = {
-  sandbox: "shell.execute", qa: "project.read", pull_request: "github.write", ci: "github.read", merge: "deployment.execute",
+  sandbox: "shell.execute", qa: "project.read", pull_request: "github.write", ci: "github.read", merge: "github.write",
 };
 export class DevopsPipeline {
   constructor(
@@ -53,6 +53,7 @@ export class DevopsPipeline {
       completedStages.push("sandbox");
 
       const qa = await this.adapter.runQa(cleanTask, sandbox.output);
+      await this.audit.record({ timestamp: new Date().toISOString(), agent: "devops", toolId: "project.read", outcome: qa.passed ? "allowed" : "failed", inputSummary: "QA verification", detail: qa.report.slice(0, 1000) });
       if (!qa.passed) return { status: "blocked", completedStages, blockedAt: "qa", detail: qa.report };
       completedStages.push("qa");
 
@@ -62,6 +63,7 @@ export class DevopsPipeline {
       completedStages.push("pull_request");
 
       const ci = await this.adapter.waitForCi(pr.id);
+      await this.audit.record({ timestamp: new Date().toISOString(), agent: "devops", toolId: "github.read", outcome: ci.passed ? "allowed" : "failed", inputSummary: `CI for PR ${pr.id}`, detail: ci.report.slice(0, 1000) });
       if (!ci.passed) return { status: "blocked", completedStages, blockedAt: "ci", pullRequestUrl: pr.url, detail: ci.report };
       completedStages.push("ci");
 
