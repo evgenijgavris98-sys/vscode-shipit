@@ -1,14 +1,7 @@
 import type { BrainConfig } from "./config";
 import type { AgentRequest, BrainAgent, BrainProvider } from "./types";
-import { ClaudeProvider } from "./claudeProvider";
-import { DeepSeekProvider } from "./deepseekProvider";
-import { KimiProvider } from "./kimiProvider";
-import { QwenProvider } from "./qwenProvider";
-import { OpenAIResponsesProvider } from "./openaiProvider";
-import { AGENT_REGISTRY, getAgentDefinition } from "./agentRegistry";
 
 export type ProviderFactory = (id: BrainProviderId) => BrainProvider;
-
 export type BrainProviderId = BrainConfig["provider"];
 
 const CODING_AGENTS = new Set<BrainAgent>(["devops", "qa_inspector", "ocr_agent"]);
@@ -29,17 +22,23 @@ export class SmartRouterProvider implements BrainProvider {
   }
 
   private rank(agent: BrainAgent, request: AgentRequest): BrainProviderId[] {
-    const configured = this.config.provider;
     const ordered: BrainProviderId[] = [];
     const add = (id: BrainProviderId) => { if (!ordered.includes(id)) ordered.push(id); };
 
-    if (CODING_AGENTS.has(agent)) { add("claude"); add("qwen"); add("deepseek"); }
-    else if (SCIENCE_AGENTS.has(agent)) { add("deepseek"); add("openai"); add("claude"); }
-    else if (RESEARCH_AGENTS.has(agent)) { add("openai"); add("deepseek"); add("claude"); }
-    else if (request.tier === "astra" || request.tier === "luna") { add("openai"); add("claude"); add("deepseek"); }
-    else { add("openai"); add("claude"); add("deepseek"); add("qwen"); add("kimi"); }
+    if (CODING_AGENTS.has(agent)) {
+      add("claude"); add("qwen"); add("deepseek");
+    } else if (SCIENCE_AGENTS.has(agent)) {
+      add("deepseek"); add("openai"); add("claude");
+    } else if (RESEARCH_AGENTS.has(agent)) {
+      add("openai"); add("deepseek"); add("claude");
+    } else if (request.tier === "astra" || request.tier === "luna") {
+      add("openai"); add("claude"); add("deepseek");
+    } else {
+      add("openai"); add("claude"); add("deepseek"); add("qwen"); add("kimi");
+    }
 
-    add(configured);
+    // The explicit provider remains a fallback rather than overriding task-specific routing.
+    add(this.config.provider);
     return ordered;
   }
 
@@ -48,9 +47,18 @@ export class SmartRouterProvider implements BrainProvider {
     const errors: string[] = [];
 
     for (const id of candidates) {
-      if (id === "openai" && !this.config.apiKey) { errors.push("openai: missing OPENAI_API_KEY"); continue; }
-      if (id === "deepseek" && !this.config.deepseekApiKey) { errors.push("deepseek: missing DEEPSEEK_API_KEY"); continue; }
-      if (id === "kimi" && !this.config.kimiApiKey && !this.config.kimiMcpUrl) { errors.push("kimi: missing Kimi credentials"); continue; }
+      if (id === "openai" && !this.config.apiKey) {
+        errors.push("openai: missing OPENAI_API_KEY");
+        continue;
+      }
+      if (id === "deepseek" && !this.config.deepseekApiKey) {
+        errors.push("deepseek: missing DEEPSEEK_API_KEY");
+        continue;
+      }
+      if (id === "kimi" && !this.config.kimiApiKey && !this.config.kimiMcpUrl) {
+        errors.push("kimi: missing Kimi credentials");
+        continue;
+      }
 
       try {
         return await this.provider(id).run(agent, request);
