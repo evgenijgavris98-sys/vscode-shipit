@@ -74,7 +74,7 @@ export function loadBrainConfig(enabledOverride?: boolean): BrainConfig {
     qwenCliPath: env("QWEN_CLI_PATH") ?? "qwen",
     qwenModel: env("QWEN_MODEL") ?? "qwen3-coder-plus",
     claudeCliPath: env("CLAUDE_CLI_PATH") ?? "claude",
-    claudeModel: env("CLAUDE_MODEL") ?? "claude-sonnet-5-5",
+    claudeModel: env("CLAUDE_MODEL") ?? "sonnet",
     deepseekApiKey: env("DEEPSEEK_API_KEY"),
     deepseekBaseUrl: env("DEEPSEEK_BASE_URL") ?? "https://api.deepseek.com",
     deepseekModel: env("DEEPSEEK_MODEL") ?? "deepseek-v4-pro",
