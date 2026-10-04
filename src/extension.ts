@@ -209,7 +209,7 @@ class ShipItExtension {
                 this.context.subscriptions.push(output);
                 output.show(true);
                 try {
-                    const provider = config.provider === 'openai' ? this.createSmartRouter(config) : this.createBrainProvider(config);
+                    const provider = this.createSmartRouter(config);
                     const team = new TeamOrchestrator(provider);
                     const result = await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: 'BIORICHEBRAIN: orchestrating team', cancellable: false }, () => team.run(task.trim()));
                     output.appendLine('Delegation plan:');
