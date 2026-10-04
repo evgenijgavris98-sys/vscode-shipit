@@ -3,6 +3,7 @@ import { AGENT_REGISTRY } from './bioricheBrain/agentRegistry';
 import { loadBrainConfig } from './bioricheBrain/config';
 import { OpenAIResponsesProvider } from './bioricheBrain/openaiProvider';
 import { KimiProvider } from './bioricheBrain/kimiProvider';
+import { QwenProvider } from './bioricheBrain/qwenProvider';
 import type { BrainProvider } from './bioricheBrain/types';
 import { TeamOrchestrator } from './bioricheBrain/teamOrchestrator';
 import type { BrainAgent, ModelTier } from './bioricheBrain/types';
@@ -179,8 +180,12 @@ class ShipItExtension {
                     vscode.window.showErrorMessage('BIORICHEBRAIN: OPENAI_API_KEY is missing in the extension host environment.');
                     return;
                 }
-                if (config.provider === 'kimi' && !config.kimiApiKey) {
-                    vscode.window.showErrorMessage('BIORICHEBRAIN: KIMI_API_KEY is missing in the extension host environment.');
+                if (config.provider === 'kimi' && !config.kimiApiKey && !config.kimiMcpUrl) {
+                    vscode.window.showErrorMessage('BIORICHEBRAIN: configure KIMI_API_KEY or KIMI_MCP_URL for Kimi execution.');
+                    return;
+                }
+                if (config.provider === 'qwen' && !config.qwenCliPath) {
+                    vscode.window.showErrorMessage('BIORICHEBRAIN: QWEN_CLI_PATH is not configured.');
                     return;
                 }
                 const task = await vscode.window.showInputBox({ prompt: 'Task for the BIORICHEBRAIN team', placeHolder: 'Describe the end-to-end task', ignoreFocusOut: true });
@@ -247,6 +252,7 @@ class ShipItExtension {
 
     private createBrainProvider(config: ReturnType<typeof loadBrainConfig>): BrainProvider {
         if (config.provider === 'kimi') return new KimiProvider(config);
+        if (config.provider === 'qwen') return new QwenProvider(config);
         return new OpenAIResponsesProvider(config, {
             workspaceRoot: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath,
             approvalGate: this.approvalGate,
