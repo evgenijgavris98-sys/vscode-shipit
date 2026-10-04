@@ -6,6 +6,7 @@ import { KimiProvider } from './bioricheBrain/kimiProvider';
 import { QwenProvider } from './bioricheBrain/qwenProvider';
 import { ClaudeProvider } from './bioricheBrain/claudeProvider';
 import { DeepSeekProvider } from './bioricheBrain/deepseekProvider';
+import { SmartRouterProvider } from './bioricheBrain/smartRouter';
 import type { BrainProvider } from './bioricheBrain/types';
 import { TeamOrchestrator } from './bioricheBrain/teamOrchestrator';
 import type { BrainAgent, ModelTier } from './bioricheBrain/types';
@@ -208,7 +209,7 @@ class ShipItExtension {
                 this.context.subscriptions.push(output);
                 output.show(true);
                 try {
-                    const provider = this.createBrainProvider(config);
+                    const provider = config.provider === 'openai' ? this.createSmartRouter(config) : this.createBrainProvider(config);
                     const team = new TeamOrchestrator(provider);
                     const result = await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: 'BIORICHEBRAIN: orchestrating team', cancellable: false }, () => team.run(task.trim()));
                     output.appendLine('Delegation plan:');
@@ -262,6 +263,10 @@ class ShipItExtension {
                 }
             })
         );
+    }
+
+    private createSmartRouter(config: ReturnType<typeof loadBrainConfig>): BrainProvider {
+        return new SmartRouterProvider(config, (id) => this.createBrainProvider({ ...config, provider: id }));
     }
 
     private createBrainProvider(config: ReturnType<typeof loadBrainConfig>): BrainProvider {
