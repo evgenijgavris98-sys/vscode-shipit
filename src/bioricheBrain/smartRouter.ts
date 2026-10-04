@@ -1,0 +1,64 @@
+import type { BrainConfig } from "./config";
+import type { AgentRequest, BrainAgent, BrainProvider } from "./types";
+import { ClaudeProvider } from "./claudeProvider";
+import { DeepSeekProvider } from "./deepseekProvider";
+import { KimiProvider } from "./kimiProvider";
+import { QwenProvider } from "./qwenProvider";
+import { OpenAIResponsesProvider } from "./openaiProvider";
+import { AGENT_REGISTRY, getAgentDefinition } from "./agentRegistry";
+
+export type ProviderFactory = (id: BrainProviderId) => BrainProvider;
+
+export type BrainProviderId = BrainConfig["provider"];
+
+const CODING_AGENTS = new Set<BrainAgent>(["devops", "qa_inspector", "ocr_agent"]);
+const SCIENCE_AGENTS = new Set<BrainAgent>(["rd_chemist", "lab_director", "technologist", "recipe_validator"]);
+const RESEARCH_AGENTS = new Set<BrainAgent>(["market_analyst", "legal_guard", "regulatory_watchdog"]);
+
+export class SmartRouterProvider implements BrainProvider {
+  private readonly providers = new Map<BrainProviderId, BrainProvider>();
+
+  public constructor(private readonly config: BrainConfig, private readonly factory: ProviderFactory) {}
+
+  private provider(id: BrainProviderId): BrainProvider {
+    const existing = this.providers.get(id);
+    if (existing) return existing;
+    const created = this.factory(id);
+    this.providers.set(id, created);
+    return created;
+  }
+
+  private rank(agent: BrainAgent, request: AgentRequest): BrainProviderId[] {
+    const configured = this.config.provider;
+    const ordered: BrainProviderId[] = [];
+    const add = (id: BrainProviderId) => { if (!ordered.includes(id)) ordered.push(id); };
+
+    if (CODING_AGENTS.has(agent)) { add("claude"); add("qwen"); add("deepseek"); }
+    else if (SCIENCE_AGENTS.has(agent)) { add("deepseek"); add("openai"); add("claude"); }
+    else if (RESEARCH_AGENTS.has(agent)) { add("openai"); add("deepseek"); add("claude"); }
+    else if (request.tier === "astra" || request.tier === "luna") { add("openai"); add("claude"); add("deepseek"); }
+    else { add("openai"); add("claude"); add("deepseek"); add("qwen"); add("kimi"); }
+
+    add(configured);
+    return ordered;
+  }
+
+  public async run(agent: BrainAgent, request: AgentRequest): Promise<string> {
+    const candidates = this.rank(agent, request);
+    const errors: string[] = [];
+
+    for (const id of candidates) {
+      if (id === "openai" && !this.config.apiKey) { errors.push("openai: missing OPENAI_API_KEY"); continue; }
+      if (id === "deepseek" && !this.config.deepseekApiKey) { errors.push("deepseek: missing DEEPSEEK_API_KEY"); continue; }
+      if (id === "kimi" && !this.config.kimiApiKey && !this.config.kimiMcpUrl) { errors.push("kimi: missing Kimi credentials"); continue; }
+
+      try {
+        return await this.provider(id).run(agent, request);
+      } catch (error) {
+        errors.push(`${id}: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    }
+
+    throw new Error(`BIORICHEBRAIN router exhausted all providers. ${errors.join(" | ")}`);
+  }
+}
