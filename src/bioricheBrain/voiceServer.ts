@@ -1,7 +1,7 @@
 import * as http from 'node:http';
 import { AddressInfo } from 'node:net';
 import OpenAI from 'openai';
-import { defineRealtimeOutputGuardrail, RealtimeAgent, RealtimeSession } from '@openai/agents/realtime';
+import { RealtimeAgent, RealtimeSession, type RealtimeOutputGuardrail } from '@openai/agents/realtime';
 import { tool } from '@openai/agents';
 import { z } from 'zod';
 import type { TeamOrchestrator } from './teamOrchestrator';
@@ -10,7 +10,7 @@ import { AGENT_REGISTRY } from './agentRegistry';
 const REALTIME_MODEL = 'gpt-realtime-2.1';
 const DEFAULT_VOICE = 'marin';
 
-const voiceSafetyGuardrail = defineRealtimeOutputGuardrail({
+const voiceSafetyGuardrail: RealtimeOutputGuardrail = {
   name: 'bioriche_voice_safety',
   policyHint: 'Не выдавай медицинские обещания как установленный факт и не обещай внешние или необратимые действия без подтверждения.',
   execute: async ({ agentOutput }) => {
