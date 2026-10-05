@@ -3,33 +3,19 @@ $Root = if ($env:BIORICHE_VIDEO_ROOT) { $env:BIORICHE_VIDEO_ROOT } else { Join-P
 New-Item -ItemType Directory -Force -Path $Root | Out-Null
 Set-Location $Root
 
-function Need($name) {
-  if (-not (Get-Command $name -ErrorAction SilentlyContinue)) {
-    Write-Warning "$name is not installed. Install it, then rerun this script."
-    return $false
-  }
-  return $true
+function Clone-IfMissing($url, $dir) {
+  if (-not (Test-Path "$Root/$dir/.git")) { git clone $url "$Root/$dir" }
 }
 
-Need "git" | Out-Null
-Need "python" | Out-Null
-Need "node" | Out-Null
+if (-not (Get-Command git -ErrorAction SilentlyContinue)) { throw "git is required" }
+if (-not (Get-Command python -ErrorAction SilentlyContinue)) { Write-Warning "python not found; install Python 3.11+ and rerun" }
+if (-not (Get-Command node -ErrorAction SilentlyContinue)) { Write-Warning "node not found; install Node 18+ and rerun" }
 
-if (-not (Test-Path "$Root/Wan2GP")) {
-  git clone https://github.com/DeepBeepMeep/Wan2GP.git "$Root/Wan2GP"
-}
-if (-not (Test-Path "$Root/rendiv")) {
-  git clone https://github.com/thecodacus/rendiv.git "$Root/rendiv"
-}
-if (-not (Test-Path "$Root/ComfyUI")) {
-  git clone https://github.com/comfyanonymous/ComfyUI.git "$Root/ComfyUI"
-}
+Clone-IfMissing "https://github.com/DeepBeepMeep/Wan2GP.git" "Wan2GP"
+Clone-IfMissing "https://github.com/comfyanonymous/ComfyUI.git" "ComfyUI"
+Clone-IfMissing "https://github.com/thecodacus/rendiv.git" "rendiv"
 
-Write-Host ""
-Write-Host "BIORICHE BRAIN free video stack installed:"
-Write-Host "  Wan2GP: $Root/Wan2GP"
-Write-Host "  ComfyUI: $Root/ComfyUI"
-Write-Host "  Rendiv:  $Root/rendiv"
-Write-Host ""
-Write-Host "Next: install GPU/Python dependencies and model weights locally."
-Write-Host "Wan2GP is local-first; ComfyUI Wan2.2 5B is the low-VRAM fallback."
+New-Item -ItemType Directory -Force -Path "$Root/models","$Root/outputs","$Root/workflows" | Out-Null
+Write-Host "BIORICHE BRAIN free video stack installed in $Root"
+Write-Host "Primary: Wan2GP/Wan2.2 | Fallback: ComfyUI Wan2.2 5B | Editing: Rendiv"
+Write-Host "Model weights are intentionally not auto-downloaded."
