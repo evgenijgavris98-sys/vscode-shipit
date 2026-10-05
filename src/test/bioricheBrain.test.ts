@@ -22,11 +22,11 @@ suite("BIORICHE BRAIN configuration", () => {
     assert.equal(config.astraEnabled, false);
   });
 
-  test("uses the GPT-5.6 tier defaults and Astra mapping", () => {
+  test("uses the current GPT-6 production routing and Astra mapping", () => {
     const config = loadBrainConfig();
-    assert.equal(config.models.luna, "gpt-5.6-luna");
+    assert.equal(config.models.luna, "gpt-6-luna");
     assert.equal(config.models.terra, "gpt-5.6-terra");
-    assert.equal(config.models.sol, "gpt-5.6-sol");
+    assert.equal(config.models.sol, "gpt-6.1-sol");
     assert.equal(config.models.astra, "gpt-6-astra");
     assert.equal(config.reasoningEffort, "medium");
     assert.equal(config.fastMode, false);
