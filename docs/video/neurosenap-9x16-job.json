@@ -1,0 +1,14 @@
+{
+  "id": "neurosenap-launch-9x16",
+  "product": "НЕЙРОСЕНАП",
+  "objective": "Premium short-form advertising video",
+  "durationSeconds": 20,
+  "aspect": "9:16",
+  "scenes": [
+    {"prompt": "premium cinematic macro botanical ingredients, liquid droplets, dark premium studio, restrained green and gold BIORICHE visual language", "seconds": 4},
+    {"prompt": "premium realistic wellness lifestyle scene, focused creative professional in a modern workspace, subtle natural light, cinematic camera motion", "seconds": 5},
+    {"prompt": "close cinematic product reveal of a dark glass liquid supplement bottle, premium studio lighting, clean background, bottle remains the hero", "seconds": 5},
+    {"prompt": "elegant final product packshot, bottle centered, premium dark studio, soft reflections, minimal composition, space for approved brand copy", "seconds": 6}
+  ],
+  "outputDir": ".bioriche/video/neurosenap-launch-9x16"
+}
