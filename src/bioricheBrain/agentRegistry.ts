@@ -32,6 +32,14 @@ export const AGENT_REGISTRY: readonly AgentDefinition[] = [
   { id: "ocr_agent", name: "OCR AGENT", purpose: "Document extraction, OCR quality and structured capture.", defaultTier: "luna", skills: ["document-ocr","pdf-extraction","data-validation"], humanApproval: ["external publication","purchase commitments","irreversible actions"] },
   { id: "procurement_agent", name: "PROCUREMENT AGENT", purpose: "Sourcing, quotations, procurement comparisons.", defaultTier: "luna", skills: ["supplier-sourcing","quotation-analysis","procurement-risk"], humanApproval: ["external publication","purchase commitments","irreversible actions"] },
   { id: "zozh_specialist", name: "ZOZH SPECIALIST", purpose: "Wellness content with evidence and claims guardrails.", defaultTier: "luna", skills: ["evidence-grading","wellness-content","claims-screening"], humanApproval: ["external publication","purchase commitments","irreversible actions"] },
+  { id: "video_director", name: "VIDEO DIRECTOR", purpose: "Video creative direction, shot lists and continuity.", defaultTier: "astra", skills: ["video-direction","shot-list","visual-continuity"], humanApproval: ["external publication"] },
+  { id: "video_scriptwriter", name: "VIDEO SCRIPTWRITER", purpose: "Hooks, scripts, CTAs and platform variants.", defaultTier: "sol", skills: ["video-scripting","hooks","cta-writing"], humanApproval: ["external publication"] },
+  { id: "storyboard_agent", name: "STORYBOARD AGENT", purpose: "Keyframes, camera, composition and motion plans.", defaultTier: "sol", skills: ["storyboarding","camera-planning","prompt-engineering"], humanApproval: ["external publication"] },
+  { id: "video_generator", name: "VIDEO GENERATOR", purpose: "Controlled ComfyUI/Wan/LTX generation workflows.", defaultTier: "sol", skills: ["comfyui","wan2.2","ltx-video","image-to-video"], humanApproval: ["external publication"] },
+  { id: "voice_avatar_agent", name: "VOICE & AVATAR", purpose: "Voice, dialogue, avatar and lip-sync production.", defaultTier: "sol", skills: ["tts","voice-direction","lip-sync"], humanApproval: ["external publication"] },
+  { id: "video_editor", name: "VIDEO EDITOR", purpose: "Deterministic editing, pacing, B-roll and exports.", defaultTier: "sol", skills: ["ffmpeg","video-editing","format-conversion"], humanApproval: ["external publication"] },
+  { id: "subtitle_localization", name: "SUBTITLE & LOCALIZATION", purpose: "Whisper transcription, captions and language variants.", defaultTier: "terra", skills: ["whisper","subtitles","localization"], humanApproval: ["external publication"] },
+  { id: "video_qa", name: "VIDEO QA", purpose: "Independent visual, audio, text and brand quality gate.", defaultTier: "sol", skills: ["video-qa","brand-check","artifact-detection"], humanApproval: ["external publication"] },
 ] as const;
 
 export function getAgentDefinition(agent: BrainAgent): AgentDefinition {
