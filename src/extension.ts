@@ -25,7 +25,7 @@ class ShipItExtension {
     private statusBar: ShipItStatusBar;
     private orchestrator: LoopOrchestrator;
     private sidebarProvider: ShipItSidebarProvider;
-    private voiceServer: { close: () => Promise<void> } | null = null;
+    private voiceServer: { url: string; close: () => Promise<void> } | null = null;
 
     constructor(private readonly context: vscode.ExtensionContext) {
         log('ShipIt extension activating...');
@@ -128,7 +128,7 @@ class ShipItExtension {
                 }
                 try {
                     if (this.voiceServer) {
-                        await vscode.env.openExternal(vscode.Uri.parse('http://127.0.0.1:3000/'));
+                        await vscode.env.openExternal(vscode.Uri.parse(this.voiceServer.url));
                         return;
                     }
                     const server = await startBioricheVoiceServer(config.apiKey);
