@@ -14,6 +14,7 @@ import { ShipItSidebarProvider } from './sidebarProvider';
 import { log, disposeLogger, showLogs } from './logger';
 import { runDevopsSandbox } from './bioricheBrain/sandboxRunner';
 import { getTaskStatsAsync, getNextTaskAsync, createManualPrdAsync, readProjectDescriptionAsync, createOrOpenProjectDescriptionAsync } from './fileUtils';
+import { startBioricheVoiceServer } from './bioricheBrain/voiceServer';
 
 /**
  * Main ShipIt extension class
@@ -24,6 +25,7 @@ class ShipItExtension {
     private statusBar: ShipItStatusBar;
     private orchestrator: LoopOrchestrator;
     private sidebarProvider: ShipItSidebarProvider;
+    private voiceServer: { close: () => Promise<void> } | null = null;
 
     constructor(private readonly context: vscode.ExtensionContext) {
         log('ShipIt extension activating...');
@@ -116,6 +118,27 @@ class ShipItExtension {
 
             vscode.commands.registerCommand('shipit.generateAllUserStories', async () => {
                 await this.orchestrator.generateAllUserStories();
+            }),
+
+            vscode.commands.registerCommand('bioricheBrain.startVoice', async () => {
+                const config = loadBrainConfig(vscode.workspace.getConfiguration('shipit.bioricheBrain').get<boolean>('enabled'));
+                if (!config.apiKey) {
+                    vscode.window.showErrorMessage('BIORICHEBRAIN Voice: OPENAI_API_KEY is missing in the extension host environment.');
+                    return;
+                }
+                try {
+                    if (this.voiceServer) {
+                        await vscode.env.openExternal(vscode.Uri.parse('http://127.0.0.1:3000/'));
+                        return;
+                    }
+                    const server = await startBioricheVoiceServer(config.apiKey);
+                    this.voiceServer = server;
+                    await vscode.env.openExternal(vscode.Uri.parse(server.url));
+                    vscode.window.showInformationMessage('BIORICHEBRAIN Voice запущен. Разрешите микрофон в браузере.');
+                } catch (error) {
+                    const message = error instanceof Error ? error.message : String(error);
+                    vscode.window.showErrorMessage('BIORICHEBRAIN Voice: ' + message);
+                }
             }),
 
             vscode.commands.registerCommand('bioricheBrain.runAgent', async () => {
@@ -309,6 +332,10 @@ class ShipItExtension {
      */
     dispose(): void {
         this.orchestrator.dispose();
+        if (this.voiceServer) {
+            void this.voiceServer.close();
+            this.voiceServer = null;
+        }
         disposeLogger();
     }
 }
