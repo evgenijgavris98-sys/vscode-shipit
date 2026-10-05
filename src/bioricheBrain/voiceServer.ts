@@ -19,7 +19,7 @@ const voiceSafetyGuardrail: RealtimeOutputGuardrail = {
     const flagged = /(лечит|вылечит|гарантирует результат|заменяет лечение|я уже (отправил|опубликовал|купил|оплатил|удалил|развернул|подал|заказал))/i.test(lower);
     return { tripwireTriggered: flagged, outputInfo: { flagged, reason: flagged ? 'Voice safety policy' : null } };
   },
-});
+};
 const MAX_SDP_BYTES = 256 * 1024;
 
 type ActiveCall = {
