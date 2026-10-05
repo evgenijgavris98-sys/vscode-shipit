@@ -1,7 +1,7 @@
 import * as http from 'node:http';
 import { AddressInfo } from 'node:net';
 import OpenAI from 'openai';
-import { RealtimeAgent, RealtimeSession } from '@openai/agents/realtime';
+import { defineRealtimeOutputGuardrail, RealtimeAgent, RealtimeSession } from '@openai/agents/realtime';
 import { tool } from '@openai/agents';
 import { z } from 'zod';
 import type { TeamOrchestrator } from './teamOrchestrator';
@@ -9,6 +9,17 @@ import { AGENT_REGISTRY } from './agentRegistry';
 
 const REALTIME_MODEL = 'gpt-realtime-2.1';
 const DEFAULT_VOICE = 'marin';
+
+const voiceSafetyGuardrail = defineRealtimeOutputGuardrail({
+  name: 'bioriche_voice_safety',
+  policyHint: 'Не выдавай медицинские обещания как установленный факт и не обещай внешние или необратимые действия без подтверждения.',
+  execute: async ({ agentOutput }) => {
+    const text = typeof agentOutput === 'string' ? agentOutput : JSON.stringify(agentOutput);
+    const lower = text.toLowerCase();
+    const flagged = /(лечит|вылечит|гарантирует результат|заменяет лечение|я уже (отправил|опубликовал|купил|оплатил|удалил|развернул|подал|заказал))/i.test(lower);
+    return { tripwireTriggered: flagged, outputInfo: { flagged, reason: flagged ? 'Voice safety policy' : null } };
+  },
+});
 const MAX_SDP_BYTES = 256 * 1024;
 
 type ActiveCall = {
@@ -116,6 +127,7 @@ export async function startBioricheVoiceServer(
     name: 'delegate_to_bioriche_orchestrator',
     description: 'Передать содержательную команду пользователя локальному ORCHESTRATOR BIORICHE BRAIN. Используй для задач, планирования, анализа, R&D, продукта, маркетинга, разработки и других рабочих запросов.',
     parameters: z.object({ input: z.string().min(2).max(12000) }),
+    needsApproval: async (_context, { input }) => /(куп|оплат|заказ|отправ|опубликов|удал|развер|подай|подпис|внешн|необрат)/i.test(input),
     async execute({ input }) {
       const result = await orchestrator.run(input.trim());
       return JSON.stringify({
@@ -214,6 +226,11 @@ export async function startBioricheVoiceServer(
         const realtimeSession = new RealtimeSession(agent, {
           model: REALTIME_MODEL,
           transport: 'websocket',
+          workflowName: 'BIORICHE BRAIN Voice',
+          groupId: `bioriche-voice-${callId}`,
+          traceMetadata: { component: 'voice', model: REALTIME_MODEL },
+          outputGuardrails: [voiceSafetyGuardrail],
+          outputGuardrailSettings: { debounceTextLength: 160 },
           config: {
             audio: {
               input: {
