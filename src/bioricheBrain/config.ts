@@ -1,9 +1,9 @@
 import type { ModelTier } from "./types";
 
 const DEFAULT_MODELS: Record<ModelTier, string> = {
-  luna: "gpt-5.6-luna",
+  luna: "gpt-6-luna",
   terra: "gpt-5.6-terra",
-  sol: "gpt-5.6-sol",
+  sol: "gpt-6.1-sol",
   astra: "gpt-6-astra",
 };
 
