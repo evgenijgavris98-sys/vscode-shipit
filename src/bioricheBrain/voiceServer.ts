@@ -5,6 +5,7 @@ import { RealtimeAgent, RealtimeSession } from '@openai/agents/realtime';
 import { tool } from '@openai/agents';
 import { z } from 'zod';
 import type { TeamOrchestrator } from './teamOrchestrator';
+import { AGENT_REGISTRY } from './agentRegistry';
 
 const REALTIME_MODEL = 'gpt-realtime-2.1';
 const DEFAULT_VOICE = 'marin';
@@ -129,18 +130,37 @@ export async function startBioricheVoiceServer(
     },
   });
 
+  const specialistAgents = AGENT_REGISTRY
+    .filter((definition) => definition.id !== 'orchestrator')
+    .map((definition) => new RealtimeAgent({
+      name: definition.name,
+      handoffDescription: definition.purpose,
+      voice: DEFAULT_VOICE,
+      instructions: [
+        `Ты — голосовой специалист ${definition.name} команды BIORICHE BRAIN.`,
+        `Твоя зона ответственности: ${definition.purpose}`,
+        `Навыки: ${definition.skills.join(', ')}.`,
+        'Отвечай на русском, естественно и кратко.',
+        'Для содержательной рабочей задачи используй delegate_to_bioriche_orchestrator; не выдумывай факты или результаты.',
+        'Ты не выполняешь внешние, необратимые, юридически значимые, закупочные или deployment-действия без явного подтверждения пользователя.',
+      ].join('\\n'),
+      tools: [delegateToOrchestrator],
+    }));
+
   const agent = new RealtimeAgent({
     name: 'BIORICHE BRAIN Voice',
+    handoffDescription: 'Главный голосовой диспетчер BIORICHE BRAIN: выбирает профильного специалиста для разговора.',
     voice: DEFAULT_VOICE,
     instructions: [
-      'Ты — голосовой интерфейс BIORICHE BRAIN.',
+      'Ты — главный голосовой диспетчер BIORICHE BRAIN.',
       'Отвечай на русском, естественно и кратко.',
-      'Любую содержательную рабочую команду пользователя передавай через delegate_to_bioriche_orchestrator.',
+      'Если запрос относится к конкретной профессиональной области, передай разговор профильному специалисту.',
+      'Для общей координации используй delegate_to_bioriche_orchestrator.',
       'Не выдумывай результаты. После выполнения инструмента кратко озвучь фактический итог.',
       'Не обещай внешние или необратимые действия без явного подтверждения пользователя.',
-      'Если задача требует решения ORCHESTRATOR, не пытайся выполнять её самостоятельно.',
     ].join('\\n'),
     tools: [delegateToOrchestrator],
+    handoffs: specialistAgents,
   });
 
   const server = http.createServer(async (req, res) => {
