@@ -1,0 +1,34 @@
+name: BIORICHEBRAIN video stack
+
+on:
+  push:
+    paths:
+      - "src/bioricheBrain/**"
+      - "docs/BIORICHEBRAIN_VIDEO_PIPELINE.md"
+      - "docs/video/**"
+      - "scripts/video/**"
+      - "package.json"
+      - "package-lock.json"
+  pull_request:
+    paths:
+      - "src/bioricheBrain/**"
+      - "docs/BIORICHEBRAIN_VIDEO_PIPELINE.md"
+      - "docs/video/**"
+      - "scripts/video/**"
+      - "package.json"
+      - "package-lock.json"
+
+jobs:
+  compile-and-validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run compile
+      - run: npm run lint
+      - name: Validate video preset
+        run: node -e "const fs=require('fs'); const j=JSON.parse(fs.readFileSync('docs/video/neurosenap-9x16-job.json','utf8')); if(j.aspect!=='9:16'||!Array.isArray(j.scenes)||j.scenes.length<1) process.exit(1)"
