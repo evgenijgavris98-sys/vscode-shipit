@@ -20,7 +20,8 @@ const ALL_AGENTS: readonly BrainAgent[] = [
   "orchestrator","memory_engine","strategist","lab_director","sales_bot","customer_success",
   "data_scientist","devops","label_designer","technologist","recipe_validator","legal_guard",
   "rd_chemist","market_analyst","brand_designer","supply_chain","content_manager","qa_inspector",
-  "regulatory_watchdog","ocr_agent","procurement_agent","zozh_specialist",
+  "regulatory_watchdog","ocr_agent","procurement_agent","zozh_specialist","video_director","video_scriptwriter",
+  "storyboard_agent","video_generator","voice_avatar_agent","video_editor","subtitle_localization","video_qa",
 ];
 
 export const TOOL_REGISTRY: readonly ToolDefinition[] = [
@@ -34,6 +35,12 @@ export const TOOL_REGISTRY: readonly ToolDefinition[] = [
   { id: "deployment.execute", description: "Deploy infrastructure or production artifacts.", risk: "irreversible", requiresApproval: true, allowedAgents: ["devops","orchestrator"] },
   { id: "procurement.commit", description: "Place an order or create a purchase commitment.", risk: "irreversible", requiresApproval: true, allowedAgents: ["procurement_agent","supply_chain","orchestrator"] },
   { id: "legal.submit", description: "Submit a legal or regulatory filing.", risk: "irreversible", requiresApproval: true, allowedAgents: ["legal_guard","regulatory_watchdog","orchestrator"] },
+  { id: "video.comfyui.generate", description: "Run allowlisted ComfyUI video generation workflows.", risk: "write", requiresApproval: false, allowedAgents: ["video_generator","storyboard_agent","video_director"] },
+  { id: "video.comfyui.workflow", description: "Load and parameterize approved ComfyUI video workflows.", risk: "write", requiresApproval: false, allowedAgents: ["video_generator","storyboard_agent"] },
+  { id: "video.ffmpeg.render", description: "Render, transcode and package video outputs with FFmpeg.", risk: "write", requiresApproval: false, allowedAgents: ["video_editor","video_qa"] },
+  { id: "video.whisper.transcribe", description: "Transcribe speech and generate subtitle timing.", risk: "read", requiresApproval: false, allowedAgents: ["subtitle_localization","video_editor","video_qa"] },
+  { id: "video.tts.synthesize", description: "Generate approved voice tracks through configured TTS providers.", risk: "write", requiresApproval: false, allowedAgents: ["voice_avatar_agent","video_director"] },
+  { id: "video.qa.inspect", description: "Inspect generated video for artifacts, text, audio and brand consistency.", risk: "read", requiresApproval: false, allowedAgents: ["video_qa","qa_inspector","brand_designer"] },
 ];
 
 export function getToolDefinition(toolId: string): ToolDefinition {
