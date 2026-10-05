@@ -131,7 +131,9 @@ class ShipItExtension {
                         await vscode.env.openExternal(vscode.Uri.parse(this.voiceServer.url));
                         return;
                     }
-                    const server = await startBioricheVoiceServer(config.apiKey);
+                    const provider = this.createBrainProvider(config);
+                    const voiceOrchestrator = new TeamOrchestrator(provider);
+                    const server = await startBioricheVoiceServer(config.apiKey, voiceOrchestrator);
                     this.voiceServer = server;
                     await vscode.env.openExternal(vscode.Uri.parse(server.url));
                     vscode.window.showInformationMessage('BIORICHEBRAIN Voice запущен. Разрешите микрофон в браузере.');
