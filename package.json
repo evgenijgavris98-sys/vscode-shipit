@@ -18,6 +18,7 @@
     "views": {"shipit": [{"type": "webview", "id": "shipit.sidebar", "name": "ShipIt", "icon": "$(package)"}]},
     "commands": [
       {"command": "bioricheBrain.runTeam", "title": "BIORICHEBRAIN: Run Team"},
+      {"command": "bioricheBrain.startVoice", "title": "BIORICHEBRAIN: Start Voice Conversation"},
       {"command": "bioricheBrain.runAgent", "title": "BIORICHEBRAIN: Run Agent"},
       {"command": "shipit.showPanel", "title": "ShipIt: Open Control Panel", "icon": "$(package)"},
       {"command": "shipit.start", "title": "ShipIt: Start Loop"},
