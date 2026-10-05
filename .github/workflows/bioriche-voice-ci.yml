@@ -1,0 +1,20 @@
+name: BIORICHE BRAIN Voice CI
+
+on:
+  push:
+    branches:
+      - bioriche/voice-realtime
+  workflow_dispatch:
+
+jobs:
+  compile-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm install
+      - run: npm run compile
+      - run: npm run lint
