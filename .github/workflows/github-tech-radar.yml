@@ -1,0 +1,31 @@
+name: BIORICHEBRAIN GitHub Tech Radar
+
+on:
+  schedule:
+    - cron: "17 5 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  radar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Scan GitHub ecosystem
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: node scripts/github-tech-radar.mjs
+      - name: Publish radar artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: biorichebrain-github-tech-radar
+          path: github-tech-radar.md
+          retention-days: 30
