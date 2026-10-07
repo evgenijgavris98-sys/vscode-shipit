@@ -1,6 +1,8 @@
 name: BIORICHEBRAIN GitHub Tech Radar
 
 on:
+  push:
+    branches: ["main", "biorichebrain/**"]
   schedule:
     - cron: "17 5 * * *"
   workflow_dispatch:
