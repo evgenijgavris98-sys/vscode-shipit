@@ -102,10 +102,4 @@ const lines = [
 
 await fs.writeFile("github-tech-radar.md", lines.join("\n") + "\n");
 
-const title = "BIORICHEBRAIN GitHub Tech Radar";
-const search = await gh(`/search/issues?q=${encodeURIComponent(`repo:${repo} is:issue in:title "${title}"`)}&per_page=5`);
-const body = lines.join("\n");
-const request = { method: search.items?.length ? "PATCH" : "POST", body: JSON.stringify(search.items?.length ? {title, body} : {title, body, labels:["enhancement"]}), headers: {"content-type":"application/json"} };
-await gh(search.items?.length ? `/repos/${repo}/issues/${search.items[0].number}` : `/repos/${repo}/issues`, request);
-
-console.log(JSON.stringify({count: rows.length, top: rows.slice(0,10).map(r => ({name:r.name, score:r.score, stars:r.stars, license:r.license}))}, null, 2));
+console.log(JSON.stringify({count: rows.length, top: rows.slice(0,10).map(r => ({name:r.name, score:r.score, stars:r.stars, license:r.license}))}, null, 2));\n
