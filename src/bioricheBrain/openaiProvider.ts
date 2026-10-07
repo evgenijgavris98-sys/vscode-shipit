@@ -1,11 +1,11 @@
-import { Agent, RunState, run, setDefaultOpenAIKey } from "@openai/agents";
+import { Agent, RunState, connectMcpServers, run, setDefaultOpenAIKey } from "@openai/agents";
 import type { AgentRequest, BrainAgent, BrainProvider } from "./types";
 import type { BrainConfig } from "./config";
 import { createBrainTools } from "./runtimeTools";
 import { DenyByDefaultApprovalGate, type ApprovalGate } from "./approvalGate";
 import { MemoryAuditSink, type AuditSink } from "./auditLog";
 import { createAgentDelegationTools } from "./agentDelegation";
-import { createBioricheMcpServer } from "./mcpRegistry";
+import { createBioricheMcpServers } from "./mcpRegistry";
 import { CheckpointStore } from "./checkpointStore";
 
 const ROLE_INSTRUCTIONS: Record<BrainAgent, string> = {
@@ -65,8 +65,10 @@ export class OpenAIResponsesProvider implements BrainProvider {
     const feedback = request.qaFeedback ? `\n\nQA feedback from the previous attempt:\n${request.qaFeedback}` : "";
     const model = this.config.models[request.tier];
 
-    const mcpServer = createBioricheMcpServer();
-    if (mcpServer) await mcpServer.connect();
+    const mcpServers = createBioricheMcpServers();
+    const connectedMcp = mcpServers.length > 0
+      ? await connectMcpServers(mcpServers, { connectInParallel: true })
+      : undefined;
 
     const brainAgent = new Agent({
       name: `BIORICHEBRAIN — ${agent}`,
@@ -80,7 +82,11 @@ export class OpenAIResponsesProvider implements BrainProvider {
           ? createAgentDelegationTools(this.config, this.workspaceRoot, this.approvalGate, this.audit)
           : []),
       ],
-      mcpServers: mcpServer ? [mcpServer] : [],
+      mcpServers: connectedMcp?.active ?? [],
+      mcpConfig: {
+        includeServerInToolNames: true,
+        errorFunction: null,
+      },
       modelSettings: {
         reasoning: { effort: this.config.reasoningEffort },
         timeoutMs: 120_000,
@@ -96,7 +102,7 @@ export class OpenAIResponsesProvider implements BrainProvider {
         { maxTurns: agent === "orchestrator" ? 10 : 8 },
       );
     } finally {
-      if (mcpServer) await mcpServer.close();
+      if (connectedMcp) await connectedMcp.close();
     }
 
     if (result.interruptions?.length && this.checkpoints) {
