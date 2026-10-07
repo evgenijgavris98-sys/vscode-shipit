@@ -39,7 +39,7 @@ const PRESETS: Record<BioricheMcpPreset["id"], BioricheMcpPreset> = {
     id: "playwright",
     name: "BIORICHEBRAIN Playwright",
     transport: "stdio",
-    fullCommand: "npx -y @playwright/mcp@latest --headless --caps=core",
+    fullCommand: "npx -y @playwright/mcp@0.0.83 --headless --caps=core --no-webmcp",
     allowedTools: [
       "browser_navigate",
       "browser_snapshot",
