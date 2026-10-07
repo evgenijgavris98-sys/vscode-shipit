@@ -100,4 +100,4 @@ const lines = [
   "- Video generation pipelines"
 ];
 
-await fs.writeFile("github-tech-radar.md", lines.join(String.fromCharCode(10)) + String.fromCharCode(10));\n\nconsole.log(JSON.stringify({count: rows.length, top: rows.slice(0,10).map(r => ({name:r.name, score:r.score, stars:r.stars, license:r.license}))}, null, 2));
+await fs.writeFile("github-tech-radar.md", lines.join(String.fromCharCode(10)) + String.fromCharCode(10));console.log(JSON.stringify({count: rows.length, top: rows.slice(0,10).map(r => ({name:r.name, score:r.score, stars:r.stars, license:r.license}))}, null, 2));
