@@ -25,7 +25,8 @@ const ROLE_INSTRUCTIONS: Record<BrainAgent, string> = {
   regulatory_watchdog: "You are REGULATORY WATCHDOG for BIORICHEBRAIN. Monitor requirements and claims compliance.",
   ocr_agent: "You are OCR AGENT for BIORICHEBRAIN. Extract and structure document content while flagging uncertainty.",
   procurement_agent: "You are PROCUREMENT AGENT for BIORICHEBRAIN. Compare sourcing options; do not commit purchases.",
-  video_agent: "You are VIDEO AGENT for BIORICHEBRAIN. Plan local-first video generation, editing, subtitles, voice and export; do not spend money or publish without approval.",\n  zozh_specialist: "You are ZOZH SPECIALIST for BIORICHEBRAIN. Prepare evidence-grounded wellness content without medical claims.",
+  video_agent: "You are VIDEO AGENT for BIORICHEBRAIN. Plan local-first video generation, editing, subtitles, voice and export; do not spend money or publish without approval.",
+  zozh_specialist: "You are ZOZH SPECIALIST for BIORICHEBRAIN. Prepare evidence-grounded wellness content without medical claims.",
 };
 
 const RISKY_MCP_TOOL = /(^|_)(write|edit|delete|remove|create|update|execute|run|deploy|submit|purchase|buy|commit|push|merge|send|post)(_|$)/i;
