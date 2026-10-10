@@ -1,6 +1,7 @@
 import * as assert from "node:assert/strict";
 import { loadBrainConfig } from "../bioricheBrain/config";
 import { AGENT_REGISTRY } from "../bioricheBrain/agentRegistry";
+import { authorizeToolInvocation } from "../bioricheBrain/toolRegistry";
 
 declare const suite: (name: string, fn: () => void) => void;
 declare const test: (name: string, fn: () => void) => void;
@@ -54,7 +55,14 @@ test("falls back safely for malformed QA retry values", () => {
   }
 });
 
-test("registers exactly 23 uniquely identified BIORICHEBRAIN agents", () => {
-  assert.equal(AGENT_REGISTRY.length, 23);
+test("registers exactly 31 uniquely identified BIORICHEBRAIN agents", () => {
+  assert.equal(AGENT_REGISTRY.length, 31);
   assert.equal(new Set(AGENT_REGISTRY.map((agent) => agent.id)).size, 23);
+});
+
+
+test("registers the video department roles and keeps shell execution restricted", () => {
+  const videoRoles = ["video_director","video_scriptwriter","storyboard_agent","video_generator","voice_avatar_agent","video_editor","subtitle_localization","video_qa"];
+  for (const role of videoRoles) assert.ok(AGENT_REGISTRY.some((agent) => agent.id === role));
+  assert.throws(() => authorizeToolInvocation({ toolId: "shell.execute", agent: "video_generator", input: {} }), /not authorized/);
 });
