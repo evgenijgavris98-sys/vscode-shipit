@@ -57,4 +57,5 @@ test("falls back safely for malformed QA retry values", () => {
 test("registers exactly 23 uniquely identified BIORICHEBRAIN agents", () => {
   assert.equal(AGENT_REGISTRY.length, 23);
   assert.equal(new Set(AGENT_REGISTRY.map((agent) => agent.id)).size, 23);
+  assert.ok(AGENT_REGISTRY.some((agent) => agent.id === "video_agent"));
 });
