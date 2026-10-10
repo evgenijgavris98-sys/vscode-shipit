@@ -1,6 +1,7 @@
 import * as assert from "node:assert/strict";
 import { loadBrainConfig } from "../bioricheBrain/config";
 import { AGENT_REGISTRY } from "../bioricheBrain/agentRegistry";
+import { permissionResultForDecision } from "../bioricheBrain/copilotPermission";
 
 declare const suite: (name: string, fn: () => void) => void;
 declare const test: (name: string, fn: () => void) => void;
@@ -57,4 +58,15 @@ test("falls back safely for malformed QA retry values", () => {
 test("registers exactly 23 uniquely identified BIORICHEBRAIN agents", () => {
   assert.equal(AGENT_REGISTRY.length, 23);
   assert.equal(new Set(AGENT_REGISTRY.map((agent) => agent.id)).size, 23);
+});
+
+
+test("Copilot permission requests fail closed unless explicitly approved once", () => {
+  assert.deepEqual(permissionResultForDecision("Approve once"), { kind: "approve-once" });
+  assert.deepEqual(permissionResultForDecision("Deny"), {
+    kind: "reject",
+    feedback: "The user did not explicitly approve this operation. Do not retry it without approval.",
+  });
+  assert.equal(permissionResultForDecision(undefined).kind, "reject");
+  assert.equal(permissionResultForDecision("unexpected").kind, "reject");
 });
