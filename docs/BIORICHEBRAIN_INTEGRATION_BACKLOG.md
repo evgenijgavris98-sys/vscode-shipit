@@ -60,6 +60,8 @@ Keep the existing TypeScript-first BIORICHEBRAIN runtime as the control plane. A
 - **PR #14 — video department:** closed as stale; eight typed video specialist roles, a canonical pipeline validator and least-privilege tests were rebuilt and merged in **PR #27** after all CI passed.
 - **PR #16 — deny-by-default security:** closed as superseded; **PR #26** merged the per-operation Copilot approval gate. Only explicit “Approve once” approves a single request; dismissal and unexpected responses reject.
 - **PR #19 — skill runtime:** closed as stale; the curated skill loader and five project-authored skills were rebuilt and merged in **PR #29** after CI passed.
+- **PR #1 — early OpenAI model-router architecture:** closed as stale/non-mergeable after the runtime evolved; model-monitoring and QA ideas are deferred for selective porting, not merged wholesale.
+- **PR #12 — Qwen-only provider:** closed as superseded by PR #28, which integrated Qwen alongside Claude and DeepSeek.
 - **PR #22 — controlled knowledge structure:** merged.
 - **PR #23 — integration backlog and 100-role workforce blueprint:** merged.
 - **PR #24 — Tech Radar main-branch validation trigger:** merged; the Radar workflow has since run successfully on `main` and published an artifact.
