@@ -16,7 +16,7 @@ async function gh(path, options = {}) {
     ...options,
     headers: { ...headers, ...(options.headers || {}) }
   });
-  if (!res.ok) throw new Error(`${res.status} ${res.statusText}: ${await res.text()}`);
+  if (!res.ok) throw new Error(`GitHub API request failed: HTTP ${res.status} for ${path.split("?")[0]}`);
   return res.json();
 }
 
@@ -38,7 +38,9 @@ for (const query of queries) {
   const data = await gh(`/search/repositories?q=${encodeURIComponent(`${query} archived:false fork:false`)}&sort=stars&order=desc&per_page=10`);
   for (const r of data.items ?? []) {
     if (r.archived || r.fork) continue;
-    const days = Math.max(0, (now - new Date(r.pushed_at).getTime()) / 86400000);
+    const pushedAt = r.pushed_at ? new Date(r.pushed_at) : null;
+    const pushedMs = pushedAt && !Number.isNaN(pushedAt.getTime()) ? pushedAt.getTime() : null;
+    const days = pushedMs === null ? 3650 : Math.max(0, (now - pushedMs) / 86400000);
     const freshness = Math.max(0, 30 - days);
     const score = Math.round(Math.log10(r.stargazers_count + 1) * 25 + Math.log10(r.forks_count + 1) * 8 + freshness);
     const row = {
@@ -47,7 +49,7 @@ for (const query of queries) {
       description: (r.description || "").replace(/\s+/g, " ").trim(),
       stars: r.stargazers_count,
       forks: r.forks_count,
-      pushed: r.pushed_at,
+      pushed: pushedMs === null ? "unknown" : pushedAt.toISOString(),
       license: r.license?.spdx_id || "NO-LICENSE-DATA",
       score
     };
@@ -81,7 +83,7 @@ const lines = [
   "",
   "| Score | Repository | Stars | Forks | Last push | License | Why watch |",
   "|---:|---|---:|---:|---|---|---|",
-  ...rows.map(r => `| ${r.score} | [${r.name}](${r.url}) | ${r.stars.toLocaleString()} | ${r.forks.toLocaleString()} | ${r.pushed.slice(0,10)} | ${r.license} | ${why(r)} |`),
+  ...rows.map(r => `| ${r.score} | [${r.name}](${r.url}) | ${r.stars.toLocaleString()} | ${r.forks.toLocaleString()} | ${r.pushed === "unknown" ? "unknown" : r.pushed.slice(0,10)} | ${r.license} | ${why(r)} |`),
   "",
   "## Decision policy",
   "",
