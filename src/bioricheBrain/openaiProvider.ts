@@ -1,11 +1,11 @@
-import { Agent, RunState, run, setDefaultOpenAIKey } from "@openai/agents";
+import { Agent, RunState, connectMcpServers, run, setDefaultOpenAIKey } from "@openai/agents";
 import type { AgentRequest, BrainAgent, BrainProvider } from "./types";
 import type { BrainConfig } from "./config";
 import { createBrainTools } from "./runtimeTools";
 import { DenyByDefaultApprovalGate, type ApprovalGate } from "./approvalGate";
 import { MemoryAuditSink, type AuditSink } from "./auditLog";
 import { createAgentDelegationTools } from "./agentDelegation";
-import { createBioricheMcpServer } from "./mcpRegistry";
+import { createBioricheMcpServers } from "./mcpRegistry";
 import { CheckpointStore } from "./checkpointStore";
 
 const ROLE_INSTRUCTIONS: Record<BrainAgent, string> = {
@@ -31,6 +31,7 @@ const ROLE_INSTRUCTIONS: Record<BrainAgent, string> = {
   ocr_agent: "You are OCR AGENT for BIORICHEBRAIN. Document extraction, OCR quality and structured capture. Work only within assigned scope; distinguish sourced facts, supplier claims, project hypotheses, validated results, and patent candidates. Do not invent data, approvals, or experimental outcomes. Avoid medical claims. Escalate safety, legal, regulatory, privacy, and irreversible actions for human review.",
   procurement_agent: "You are PROCUREMENT AGENT for BIORICHEBRAIN. Sourcing, quotations, procurement comparisons. Work only within assigned scope; distinguish sourced facts, supplier claims, project hypotheses, validated results, and patent candidates. Do not invent data, approvals, or experimental outcomes. Avoid medical claims. Escalate safety, legal, regulatory, privacy, and irreversible actions for human review.",
   zozh_specialist: "You are ZOZH SPECIALIST for BIORICHEBRAIN. Wellness content with evidence and claims guardrails. Work only within assigned scope; distinguish sourced facts, supplier claims, project hypotheses, validated results, and patent candidates. Do not invent data, approvals, or experimental outcomes. Avoid medical claims. Escalate safety, legal, regulatory, privacy, and irreversible actions for human review.",
+  video_agent: "You are VIDEO AGENT for BIORICHEBRAIN. Video concepts, storyboards, prompts and production workflows. Work only within assigned scope; distinguish sourced facts, supplier claims, project hypotheses, validated results, and patent candidates. Do not invent data, approvals, or experimental outcomes. Avoid medical claims. Escalate safety, legal, regulatory, privacy, publication, and irreversible actions for human review.",
 };
 
 export interface BrainRuntimeOptions {
@@ -65,8 +66,10 @@ export class OpenAIResponsesProvider implements BrainProvider {
     const feedback = request.qaFeedback ? `\n\nQA feedback from the previous attempt:\n${request.qaFeedback}` : "";
     const model = this.config.models[request.tier];
 
-    const mcpServer = createBioricheMcpServer();
-    if (mcpServer) await mcpServer.connect();
+    const mcpServers = createBioricheMcpServers();
+    const connectedMcp = mcpServers.length > 0
+      ? await connectMcpServers(mcpServers, { connectInParallel: true })
+      : undefined;
 
     const brainAgent = new Agent({
       name: `BIORICHEBRAIN — ${agent}`,
@@ -80,7 +83,11 @@ export class OpenAIResponsesProvider implements BrainProvider {
           ? createAgentDelegationTools(this.config, this.workspaceRoot, this.approvalGate, this.audit)
           : []),
       ],
-      mcpServers: mcpServer ? [mcpServer] : [],
+      mcpServers: connectedMcp?.active ?? [],
+      mcpConfig: {
+        includeServerInToolNames: true,
+        errorFunction: null,
+      },
       modelSettings: {
         reasoning: { effort: this.config.reasoningEffort },
         timeoutMs: 120_000,
@@ -96,7 +103,7 @@ export class OpenAIResponsesProvider implements BrainProvider {
         { maxTurns: agent === "orchestrator" ? 10 : 8 },
       );
     } finally {
-      if (mcpServer) await mcpServer.close();
+      if (connectedMcp) await connectedMcp.close();
     }
 
     if (result.interruptions?.length && this.checkpoints) {

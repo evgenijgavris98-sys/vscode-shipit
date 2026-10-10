@@ -27,6 +27,8 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      # Keep CI install deterministic while the branch lockfile catches up with the new agent SDK graph.
+      - run: npm install --package-lock-only --ignore-scripts
       - run: npm ci
       - run: npm run compile
       - run: npm run lint
