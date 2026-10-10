@@ -1,6 +1,12 @@
 name: BIORICHEBRAIN GitHub Tech Radar
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - "scripts/github-tech-radar.mjs"
+      - ".github/workflows/github-tech-radar.yml"
   pull_request:
     paths:
       - "scripts/github-tech-radar.mjs"
