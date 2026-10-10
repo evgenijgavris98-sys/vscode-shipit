@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
 import type { AgentRequest, BrainAgent, BrainProvider } from "./types";
 import type { BrainConfig } from "./config";
+import { loadAgentSkillInstructions } from "./skillLoader";
 
 const ROLE_INSTRUCTIONS: Record<BrainAgent, string> = {
   orchestrator: "You are ORCHESTRATOR for BIORICHEBRAIN. Decompose and synthesize tasks. Distinguish sourced facts, hypotheses and validated results.",
@@ -89,6 +90,7 @@ export class QwenProvider implements BrainProvider {
     const feedback = request.qaFeedback ? `\n\nQA feedback from the previous attempt:\n${request.qaFeedback}` : "";
     const prompt = [
       ROLE_INSTRUCTIONS[agent],
+      await loadAgentSkillInstructions(agent),
       "Work only within the assigned task.",
       "Do not invent data, approvals, experimental outcomes or regulatory facts.",
       "Do not make medical claims.",
