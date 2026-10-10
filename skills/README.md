@@ -25,4 +25,4 @@ Portable, reviewable workflows inspired by open Agent Skills libraries. These ar
 - Agent Skills are executable-by-influence instructions. Review all imported files and scripts before enabling them in an agent with tools.
 
 ## Integration status
-This folder is a local, reviewable skill pack for the repository. It does not install skills on a phone or external Claude account, and it does not silently add new runtime permissions. Runtime discovery/wiring should be added only after tests prove the intended agent loads the right skill.
+The extension runtime loads only an explicit allowlist of bundled skills for mapped agents. It reads Markdown instructions only; it does not execute skill scripts, load arbitrary workspace skills, or grant new tools/permissions. Mapping tests are included. This does not install skills on a phone or external Claude account.
