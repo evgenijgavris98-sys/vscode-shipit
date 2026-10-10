@@ -2,6 +2,7 @@ import * as assert from "node:assert/strict";
 import { loadBrainConfig } from "../bioricheBrain/config";
 import { AGENT_REGISTRY } from "../bioricheBrain/agentRegistry";
 import { authorizeToolInvocation } from "../bioricheBrain/toolRegistry";
+import { validateVideoPipeline } from "../bioricheBrain/videoDepartment";
 
 declare const suite: (name: string, fn: () => void) => void;
 declare const test: (name: string, fn: () => void) => void;
@@ -65,4 +66,10 @@ test("registers the video department roles and keeps shell execution restricted"
   const videoRoles = ["video_director","video_scriptwriter","storyboard_agent","video_generator","voice_avatar_agent","video_editor","subtitle_localization","video_qa"];
   for (const role of videoRoles) assert.ok(AGENT_REGISTRY.some((agent) => agent.id === role));
   assert.throws(() => authorizeToolInvocation({ toolId: "shell.execute", agent: "video_generator", input: {} }), /not authorized/);
+});
+
+test("validates canonical video pipeline ordering", () => {
+  assert.deepEqual(validateVideoPipeline(["brief", "script", "generation", "qa", "export"]), []);
+  assert.ok(validateVideoPipeline(["brief", "qa", "script"]).some((error) => error.includes("canonical order")));
+  assert.ok(validateVideoPipeline(["brief", "brief"]).some((error) => error.includes("must not repeat")));
 });
