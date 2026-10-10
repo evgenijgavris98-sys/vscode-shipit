@@ -4,6 +4,7 @@ import { AGENT_REGISTRY } from "../bioricheBrain/agentRegistry";
 import { authorizeToolInvocation } from "../bioricheBrain/toolRegistry";
 import { validateVideoPipeline } from "../bioricheBrain/videoDepartment";
 import { permissionResultForDecision } from "../bioricheBrain/copilotPermission";
+import { getSkillIdsForAgent } from "../bioricheBrain/skillLoader";
 
 declare const suite: (name: string, fn: () => void) => void;
 declare const test: (name: string, fn: () => void) => void;
@@ -99,4 +100,11 @@ test("selects only supported BIORICHEBRAIN providers from environment", () => {
     if (previous === undefined) delete process.env.BIORICHE_BRAIN_PROVIDER;
     else process.env.BIORICHE_BRAIN_PROVIDER = previous;
   }
+});
+
+
+test("maps only curated skills to named BIORICHEBRAIN agents", () => {
+  assert.deepEqual(getSkillIdsForAgent("sales_bot"), ["brand-copywriting", "growth-marketing"]);
+  assert.deepEqual(getSkillIdsForAgent("video_scriptwriter"), ["brand-copywriting"]);
+  assert.deepEqual(getSkillIdsForAgent("orchestrator"), []);
 });
