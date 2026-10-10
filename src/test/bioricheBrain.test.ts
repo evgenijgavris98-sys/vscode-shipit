@@ -1,6 +1,8 @@
 import * as assert from "node:assert/strict";
 import { loadBrainConfig } from "../bioricheBrain/config";
 import { AGENT_REGISTRY } from "../bioricheBrain/agentRegistry";
+import { authorizeToolInvocation } from "../bioricheBrain/toolRegistry";
+import { validateVideoPipeline } from "../bioricheBrain/videoDepartment";
 import { permissionResultForDecision } from "../bioricheBrain/copilotPermission";
 
 declare const suite: (name: string, fn: () => void) => void;
@@ -55,9 +57,9 @@ test("falls back safely for malformed QA retry values", () => {
   }
 });
 
-test("registers exactly 23 uniquely identified BIORICHEBRAIN agents", () => {
-  assert.equal(AGENT_REGISTRY.length, 23);
-  assert.equal(new Set(AGENT_REGISTRY.map((agent) => agent.id)).size, 23);
+test("registers exactly 31 uniquely identified BIORICHEBRAIN agents", () => {
+  assert.equal(AGENT_REGISTRY.length, 31);
+  assert.equal(new Set(AGENT_REGISTRY.map((agent) => agent.id)).size, 31);
 });
 
 
@@ -69,4 +71,16 @@ test("Copilot permission requests fail closed unless explicitly approved once", 
   });
   assert.equal(permissionResultForDecision(undefined).kind, "reject");
   assert.equal(permissionResultForDecision("unexpected").kind, "reject");
+});
+
+
+test("registers video roles and denies them shell access by default", () => {
+  for (const role of ["video_director","video_scriptwriter","storyboard_agent","video_generator","voice_avatar_agent","video_editor","subtitle_localization","video_qa"]) assert.ok(AGENT_REGISTRY.some((agent) => agent.id === role));
+  assert.throws(() => authorizeToolInvocation({ toolId: "shell.execute", agent: "video_generator", input: {} }), /not authorized/);
+});
+
+test("validates canonical video pipeline ordering", () => {
+  assert.deepEqual(validateVideoPipeline(["brief", "script", "generation", "qa", "export"]), []);
+  assert.ok(validateVideoPipeline(["brief", "qa", "script"]).some((error) => error.includes("canonical order")));
+  assert.ok(validateVideoPipeline(["brief", "brief"]).some((error) => error.includes("must not repeat")));
 });
