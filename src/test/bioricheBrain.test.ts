@@ -1,6 +1,7 @@
 import * as assert from "node:assert/strict";
 import { loadBrainConfig } from "../bioricheBrain/config";
 import { AGENT_REGISTRY } from "../bioricheBrain/agentRegistry";
+import { getSkillIdsForAgent } from "../bioricheBrain/skillLoader";
 
 declare const suite: (name: string, fn: () => void) => void;
 declare const test: (name: string, fn: () => void) => void;
@@ -54,7 +55,7 @@ test("falls back safely for malformed QA retry values", () => {
   }
 });
 
-test("registers exactly 22 uniquely identified BIORICHEBRAIN agents", () => {
+test("maps reviewed skills only to the intended BIORICHEBRAIN agents", () => {\n  assert.deepEqual(getSkillIdsForAgent("sales_bot"), ["brand-copywriting", "growth-marketing"]);\n  assert.deepEqual(getSkillIdsForAgent("data_scientist"), ["analytics-review"]);\n  assert.deepEqual(getSkillIdsForAgent("label_designer"), ["premium-design-brief"]);\n  assert.deepEqual(getSkillIdsForAgent("devops"), ["software-engineering"]);\n  assert.deepEqual(getSkillIdsForAgent("lab_director"), []);\n});\n\ntest("registers exactly 22 uniquely identified BIORICHEBRAIN agents", () => {
   assert.equal(AGENT_REGISTRY.length, 22);
   assert.equal(new Set(AGENT_REGISTRY.map((agent) => agent.id)).size, 22);
 });
