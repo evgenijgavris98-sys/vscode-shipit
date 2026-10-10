@@ -19,21 +19,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm install --ignore-scripts
-      - name: Prepare patched dependency lockfile (remediation branch only)
-        if: github.head_ref == 'security/fix-npm-dependencies'
-        run: npm audit fix --package-lock-only --ignore-scripts || true
-      - name: Reinstall from patched lockfile (remediation branch only)
-        if: github.head_ref == 'security/fix-npm-dependencies'
-        run: npm ci
       - name: Capture dependency audit report
         run: npm audit --json > npm-audit.json || true
-      - name: Upload patched package lock (remediation branch only)
-        if: github.head_ref == 'security/fix-npm-dependencies'
-        uses: actions/upload-artifact@v4
-        with:
-          name: patched-package-lock
-          path: package-lock.json
-          retention-days: 7
       - name: Upload dependency audit report
         if: always()
         uses: actions/upload-artifact@v4
@@ -43,33 +30,3 @@ jobs:
           retention-days: 7
       - run: npm run compile
       - run: npm run lint
-  dependency_lockfile:
-    if: github.event_name == 'pull_request' && github.repository == 'evgenijgavris98-sys/vscode-shipit' && github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'security/fix-npm-dependencies'
-    permissions:
-      contents: write
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref }}
-          persist-credentials: true
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - name: Generate patched lockfile without lifecycle scripts
-        run: |
-          npm install --ignore-scripts
-          npm audit fix --package-lock-only --ignore-scripts || true
-          npm ci
-      - name: Commit lockfile update to this branch only
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add package-lock.json
-          if git diff --cached --quiet; then
-            echo "package-lock.json already matches the patched dependency graph"
-            exit 0
-          fi
-          git commit -m "security(deps): update patched package lock"
-          git push origin "HEAD:${{ github.head_ref }}"
