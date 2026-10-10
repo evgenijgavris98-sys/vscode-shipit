@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { permissionResultForDecision } from "./bioricheBrain/copilotPermission";
 import { logError, logInfo } from "./logger";
 
 // Use any types to avoid ESM/CJS import issues with the Copilot SDK
@@ -191,10 +192,38 @@ export class CopilotSdkService {
       const sessionConfig: any = {
         model: options.model || "gpt-4.1",
         streaming: options.streaming !== false,
-        // Auto-approve all tool operations for autonomous workflow
-        onPermissionRequest: async () => {
-          logInfo("Auto-approving tool permission request");
-          return { kind: "approved" };
+        // Every tool operation requires an explicit, per-request human decision.
+        // Closing the dialog or any unexpected result fails closed.
+        onPermissionRequest: async (request: any) => {
+          const requestKind =
+            request && typeof request.kind === "string"
+              ? request.kind
+              : "unknown";
+          const detailCandidates = [
+            request?.intention,
+            request?.toolName,
+            request?.fileName,
+            request?.fullCommandText,
+            request?.url,
+            request?.path,
+          ];
+          const detail = detailCandidates
+            .filter((value) => typeof value === "string" && value.trim())
+            .join("\n")
+            .slice(0, 1200);
+          const decision = await vscode.window.showWarningMessage(
+            `Copilot requests permission for: ${requestKind}. Approve this single operation?`,
+            { modal: true, detail: detail || "No additional operation details were provided." },
+            "Approve once",
+            "Deny",
+          );
+          const permissionResult = permissionResultForDecision(decision);
+          if (permissionResult.kind === "approve-once") {
+            logInfo(`Human approved one Copilot permission request (kind: ${requestKind})`);
+          } else {
+            logInfo(`Denied Copilot permission request (kind: ${requestKind}; no explicit approval)`);
+          }
+          return permissionResult;
         },
       };
 
