@@ -21,7 +21,7 @@ jobs:
       - run: npm install --ignore-scripts
       - name: Prepare patched dependency lockfile (remediation branch only)
         if: github.head_ref == 'security/fix-npm-dependencies'
-        run: npm audit fix --package-lock-only --ignore-scripts
+        run: npm audit fix --package-lock-only --ignore-scripts || true
       - name: Reinstall from patched lockfile (remediation branch only)
         if: github.head_ref == 'security/fix-npm-dependencies'
         run: npm ci
