@@ -30,11 +30,11 @@ Keep the existing TypeScript-first BIORICHEBRAIN runtime as the control plane. A
 | [LangGraph](https://github.com/langchain-ai/langgraph) | **REFERENCE PATTERNS ONLY** | Checkpoint vs durable-store separation is useful for memory; a second orchestration runtime would duplicate state and retries. | Implement equivalent typed checkpoints in the existing runtime before considering a migration. |
 | [OpenHands](https://github.com/All-Hands-AI/OpenHands) | **REFERENCE / isolated worker candidate** | Useful workspace boundaries, skills and remote coding execution. Do not grant raw shell access to all agents. | Prototype only in an isolated disposable workspace with synthetic data and explicit tool permissions. |
 | [Agno](https://github.com/agno-agi/agno) | **REFERENCE ONLY** | Useful concepts for RBAC, observability and agent/team/workflow separation; avoid another platform in the extension. | Borrow individual patterns where they fit existing interfaces. |
-| [Agent Skills standard](https://github.com/agentskills/agentskills) | **ADOPT FORMAT; curate skills** | Portable skill metadata is useful. Skill text is untrusted guidance and cannot grant tools or override policies. | Pin source/ref/license, inspect scripts and dependencies, map to named agents, evaluate in sandbox. |
+| [Agent Skills standard](https://github.com/agentskills/agentskills) | **INTEGRATED — PR #29** | Five project-authored skills are bundled behind an allowlist loader; skill text is instruction-only and cannot grant tools or override approval gates. | Keep skills curated; review every new skill, preserve path containment and size limits, and add evaluation fixtures. |
 | [Anthropic skills](https://github.com/anthropics/skills) | **CURATE SELECTIVELY** | Candidate skill source; never bulk-install all skills. | Review each skill's license, scripts, network behavior, provenance and fit before packaging. |
-| [Claude Code](https://github.com/anthropics/claude-code) | **PROVIDER CANDIDATE — PR #13** | Optional local CLI provider; local installation/authentication is not verified by GitHub. | Rebase PR #13, validate command arguments, timeout, output parsing, permission mode and fallback. |
-| [DeepSeek API / Harness](https://github.com/deepseek-ai) | **PROVIDER CANDIDATE — PR #13** | API and any local harness are separate integration paths. Model IDs and API compatibility must be verified against current official docs. | Rebase PR #13; test provider errors, cost limits, timeout, redaction and fallback. Do not assume a model name is available. |
-| [Qwen Code](https://github.com/QwenLM/qwen-code) | **OPTIONAL PROVIDER — review PR #13** | Keep as a separate provider adapter; do not require it for core runtime or CI. | Confirm CLI protocol, version pin, cancellation and local credential isolation. |
+| [Claude Code](https://github.com/anthropics/claude-code) | **INTEGRATED — PR #28** | Optional local CLI provider with bounded invocation; local installation/authentication is not verified by GitHub. | Verify CLI version, login, timeout and permission behavior on the target device. |
+| [DeepSeek API / Harness](https://github.com/deepseek-ai) | **API INTEGRATED — PR #28; Harness deferred** | The API adapter uses `deepseek-v4-pro` by default; local Harness installation is a separate project and is not implied. | Test credentials, current API model list, cost controls, timeout and fallback in the user environment. |
+| [Qwen Code](https://github.com/QwenLM/qwen-code) | **INTEGRATED — PR #28** | Optional local CLI provider; not required for core runtime or CI. | Verify installed CLI version, login, cancellation and local credential isolation. |
 | [Kimi](https://github.com/MoonshotAI) | **EXISTING OPTIONAL PROVIDER** | Preserve provider boundary; runtime authentication remains environment-specific. | Add provider contract tests with mocked transport and explicit unavailable-provider behavior. |
 | [Wan 2.2](https://github.com/Wan-Video/Wan2.2) + [WanGP](https://github.com/deepbeepmeep/Wan2GP) | **LOCAL VIDEO CANDIDATE — PR #14 / existing docs** | GPU generation is an optional worker; hardware compatibility and actual performance must be measured locally. | Rebase PR #14; document VRAM/model requirements and validate install scripts in disposable environments. |
 | [ComfyUI](https://github.com/Comfy-Org/ComfyUI) | **OPTIONAL VIDEO RUNTIME** | Flexible local graph execution; workflows/models must be pinned and reviewed. | Verify API workflow schema, output checksums, resource limits and no auto-publish. |
@@ -54,17 +54,26 @@ Keep the existing TypeScript-first BIORICHEBRAIN runtime as the control plane. A
 | [FastMCP](https://github.com/punkpeye/fastmcp) | **WATCH** | MCP server authoring option; avoid adding another server framework without a concrete custom-server need. | Compare with existing SDK and server boundaries if we need a first-party MCP server. |
 | [OpenAI Plugins](https://github.com/openai/plugins) | **REFERENCE ONLY** | Check current maintenance and relevance; do not treat old catalogs as the canonical skill source. | Prefer official current SDK docs and Agent Skills standard for new work. |
 
-## Required merge gates for open PRs
+## Integration status after current-main rebases
 
-- **#13 Claude/DeepSeek/Qwen providers:** currently open and based on an older main commit. Rebase first. Do not merge until TypeScript compile, lint, tests, provider contract tests, timeout/cancellation, fallback and secret-redaction checks pass. Validate model IDs and CLI flags against official current documentation.
-- **#14 Video department:** currently open draft and not mergeable. Rebase first. Keep GPU/model downloads out of CI; validate typed job contracts, output validation, local installer safety and approval-gated publication.
-- **#16 Deny-by-default security:** stale/non-mergeable. Highest priority after rebasing. Confirm the pinned Copilot SDK's exact deny decision and prove shell, file-write, MCP and other tool requests cannot run without approval. No blanket auto-approval.
-- **#19 Skill runtime:** stale/non-mergeable. Rebase after security work. Prove path containment, size limits, allowlisted skill IDs, missing-skill behavior and that skill instructions cannot add tools or bypass approvals.
-- **#22 Controlled knowledge areas:** merged into main as commit `cfdfdf88a65b2259159f5b44c13dd2f90a2c6aa3`.
+- **PR #13 — Claude/DeepSeek/Qwen:** closed as stale; provider adapters and task-aware routing were rebuilt on current `main` and merged in **PR #28** after compile, lint, test and video-stack CI passed.
+- **PR #14 — video department:** closed as stale; eight typed video specialist roles, a canonical pipeline validator and least-privilege tests were rebuilt and merged in **PR #27** after all CI passed.
+- **PR #16 — deny-by-default security:** closed as superseded; **PR #26** merged the per-operation Copilot approval gate. Only explicit “Approve once” approves a single request; dismissal and unexpected responses reject.
+- **PR #19 — skill runtime:** closed as stale; the curated skill loader and five project-authored skills were rebuilt and merged in **PR #29** after CI passed.
+- **PR #22 — controlled knowledge structure:** merged.
+- **PR #23 — integration backlog and 100-role workforce blueprint:** merged.
+- **PR #24 — Tech Radar main-branch validation trigger:** merged; the Radar workflow has since run successfully on `main` and published an artifact.
+- **PR #25 — first video rebase attempt:** closed and superseded by PR #27 after CI caught a registry-count test assertion.
+- **PR #26 — fail-closed Copilot approval:** merged.
+- **PR #27 — governed video department:** merged.
+- **PR #28 — Claude/DeepSeek/Qwen provider adapters and SmartRouter:** merged.
+- **PR #29 — reviewed skill runtime:** merged.
+
+The integrations add code and tests, but **do not prove that Claude/Qwen CLIs are installed or authenticated, that API keys exist, or that local GPU video models are installed**. Those are environment-specific smoke tests.
 
 ## Radar operating rules
 
-The daily scanner is discovery only. It must never install or execute third-party code. A candidate can move to ADOPT only after:
+The scanner is discovery only. It must never install or execute third-party code. The PR-triggered run and the first main-branch push run both succeeded, and the main-branch run published the `biorichebrain-github-tech-radar` artifact. A completed scheduled (daily) run has not yet been confirmed. A candidate can move to ADOPT only after:
 1. License and redistribution rights are confirmed.
 2. Maintenance/release history and project ownership are checked.
 3. Dependencies, install scripts, network access and secret handling are reviewed.
