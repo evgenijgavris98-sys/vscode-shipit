@@ -98,7 +98,8 @@ export class KimiProvider implements BrainProvider {
 
   public async run(agent: BrainAgent, request: AgentRequest): Promise<string> {
     const feedback = request.qaFeedback ? `\n\nQA feedback from the previous attempt:\n${request.qaFeedback}` : "";
-    const skillInstructions = await loadAgentSkillInstructions(agent);\n    const prompt = `${ROLE_INSTRUCTIONS[agent]}${skillInstructions}\n\nTask:\n${request.task.input}${feedback}\n\nUse only approved/read-only MCP capabilities. Do not perform external writes, purchases, deployments, legal submissions, or irreversible actions.`;
+    const skillInstructions = await loadAgentSkillInstructions(agent);
+    const prompt = `${ROLE_INSTRUCTIONS[agent]}${skillInstructions}\n\nTask:\n${request.task.input}${feedback}\n\nUse only approved/read-only MCP capabilities. Do not perform external writes, purchases, deployments, legal submissions, or irreversible actions.`;
 
     if (this.config.kimiMcpUrl) {
       return runKimiCli(this.config, prompt, process.cwd());
