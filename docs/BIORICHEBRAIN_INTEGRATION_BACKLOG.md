@@ -68,7 +68,9 @@ Keep the existing TypeScript-first BIORICHEBRAIN runtime as the control plane. A
 - **PR #27 — governed video department:** merged.
 - **PR #28 — Claude/DeepSeek/Qwen provider adapters and SmartRouter:** merged.
 - **PR #29 — reviewed skill runtime:** merged.
-- **Dependency security follow-up:** CI's npm install reported 15 dependency vulnerabilities (1 low, 3 moderate, 11 high). This is unresolved; run a full `npm audit --json` in the repository environment, triage direct/transitive packages, and apply tested non-breaking upgrades. Do not use `npm audit fix --force` without a compatibility review.
+- **PR #31 — npm audit report + Node 22 CI:** merged.
+- **PR #32 — dependency remediation:** merged; patched Copilot SDK, VS Code test CLI and transitive test dependencies. The post-fix `npm audit --json` artifact reports **0 vulnerabilities** (0 low, 0 moderate, 0 high, 0 critical).
+- **Dependency security:** the initial audit reported 15 vulnerabilities. PR #32 added tested overrides and updated `package-lock.json`; the post-fix audit reports **zero** advisories. Preserve the lockfile and rerun the audit after dependency changes. Avoid `npm audit fix --force` without a compatibility review.
 
 The integrations add code and tests, but **do not prove that Claude/Qwen CLIs are installed or authenticated, that API keys exist, or that local GPU video models are installed**. Those are environment-specific smoke tests.
 
