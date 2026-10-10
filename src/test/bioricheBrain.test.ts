@@ -84,3 +84,19 @@ test("validates canonical video pipeline ordering", () => {
   assert.ok(validateVideoPipeline(["brief", "qa", "script"]).some((error) => error.includes("canonical order")));
   assert.ok(validateVideoPipeline(["brief", "brief"]).some((error) => error.includes("must not repeat")));
 });
+
+
+test("selects only supported BIORICHEBRAIN providers from environment", () => {
+  const previous = process.env.BIORICHE_BRAIN_PROVIDER;
+  try {
+    for (const [provider, expected] of [["openai","openai"],["kimi","kimi"],["qwen","qwen"],["claude","claude"],["deepseek","deepseek"]] as const) {
+      process.env.BIORICHE_BRAIN_PROVIDER = provider;
+      assert.equal(loadBrainConfig().provider, expected);
+    }
+    process.env.BIORICHE_BRAIN_PROVIDER = "unknown-provider";
+    assert.equal(loadBrainConfig().provider, "openai");
+  } finally {
+    if (previous === undefined) delete process.env.BIORICHE_BRAIN_PROVIDER;
+    else process.env.BIORICHE_BRAIN_PROVIDER = previous;
+  }
+});
