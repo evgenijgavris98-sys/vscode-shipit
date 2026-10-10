@@ -1,6 +1,10 @@
 name: BIORICHEBRAIN GitHub Tech Radar
 
 on:
+  pull_request:
+    paths:
+      - "scripts/github-tech-radar.mjs"
+      - ".github/workflows/github-tech-radar.yml"
   schedule:
     - cron: "17 5 * * *"
   workflow_dispatch:
