@@ -191,10 +191,17 @@ export class CopilotSdkService {
       const sessionConfig: any = {
         model: options.model || "gpt-4.1",
         streaming: options.streaming !== false,
-        // Auto-approve all tool operations for autonomous workflow
-        onPermissionRequest: async () => {
-          logInfo("Auto-approving tool permission request");
-          return { kind: "approved" };
+        // Fail closed: tool operations must not be silently approved.
+        // Until an explicit approval UI is available, deny permission requests.
+        onPermissionRequest: async (request: any) => {
+          const requestKind =
+            request && typeof request.kind === "string"
+              ? request.kind
+              : "unknown";
+          logInfo(
+            `Denying Copilot tool permission by default (kind: ${requestKind})`,
+          );
+          return { kind: "denied-by-rules" };
         },
       };
 
