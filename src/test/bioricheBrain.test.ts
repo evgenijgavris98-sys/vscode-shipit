@@ -55,7 +55,16 @@ test("falls back safely for malformed QA retry values", () => {
   }
 });
 
-test("maps reviewed skills only to the intended BIORICHEBRAIN agents", () => {\n  assert.deepEqual(getSkillIdsForAgent("sales_bot"), ["brand-copywriting", "growth-marketing"]);\n  assert.deepEqual(getSkillIdsForAgent("data_scientist"), ["analytics-review"]);\n  assert.deepEqual(getSkillIdsForAgent("label_designer"), ["premium-design-brief"]);\n  assert.deepEqual(getSkillIdsForAgent("devops"), ["software-engineering"]);\n  assert.deepEqual(getSkillIdsForAgent("lab_director"), []);\n});\n\ntest("registers exactly 22 uniquely identified BIORICHEBRAIN agents", () => {
-  assert.equal(AGENT_REGISTRY.length, 22);
-  assert.equal(new Set(AGENT_REGISTRY.map((agent) => agent.id)).size, 22);
+test("maps reviewed skills only to the intended BIORICHEBRAIN agents", () => {
+  assert.deepEqual(getSkillIdsForAgent("sales_bot"), ["brand-copywriting", "growth-marketing"]);
+  assert.deepEqual(getSkillIdsForAgent("data_scientist"), ["analytics-review"]);
+  assert.deepEqual(getSkillIdsForAgent("label_designer"), ["premium-design-brief"]);
+  assert.deepEqual(getSkillIdsForAgent("devops"), ["software-engineering"]);
+  assert.deepEqual(getSkillIdsForAgent("lab_director"), []);
+});
+
+test("registers exactly 23 uniquely identified BIORICHEBRAIN agents", () => {
+  assert.equal(AGENT_REGISTRY.length, 23);
+  assert.equal(new Set(AGENT_REGISTRY.map((agent) => agent.id)).size, 23);
+  assert.ok(AGENT_REGISTRY.some((agent) => agent.id === "video_agent"));
 });
