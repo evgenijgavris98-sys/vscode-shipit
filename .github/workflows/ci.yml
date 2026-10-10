@@ -19,8 +19,21 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm install --ignore-scripts
+      - name: Prepare patched dependency lockfile (remediation branch only)
+        if: github.head_ref == 'security/fix-npm-dependencies'
+        run: npm audit fix --package-lock-only --ignore-scripts
+      - name: Reinstall from patched lockfile (remediation branch only)
+        if: github.head_ref == 'security/fix-npm-dependencies'
+        run: npm ci
       - name: Capture dependency audit report
         run: npm audit --json > npm-audit.json || true
+      - name: Upload patched package lock (remediation branch only)
+        if: github.head_ref == 'security/fix-npm-dependencies'
+        uses: actions/upload-artifact@v4
+        with:
+          name: patched-package-lock
+          path: package-lock.json
+          retention-days: 7
       - name: Upload dependency audit report
         if: always()
         uses: actions/upload-artifact@v4
