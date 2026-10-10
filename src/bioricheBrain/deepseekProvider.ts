@@ -1,5 +1,6 @@
 import type { AgentRequest, BrainAgent, BrainProvider } from "./types";
 import type { BrainConfig } from "./config";
+import { loadAgentSkillInstructions } from "./skillLoader";
 
 const ROLE_INSTRUCTIONS: Record<BrainAgent, string> = {
   orchestrator: "You are ORCHESTRATOR for BIORICHEBRAIN. Decompose, route and synthesize bounded work. Never invent evidence or approvals.",
@@ -52,7 +53,7 @@ export class DeepSeekProvider implements BrainProvider {
       body: JSON.stringify({
         model: this.config.deepseekModel,
         messages: [
-          { role: "system", content: ROLE_INSTRUCTIONS[agent] },
+          { role: "system", content: ROLE_INSTRUCTIONS[agent] + await loadAgentSkillInstructions(agent) },
           { role: "user", content: `${request.task.input}${feedback}` },
         ],
         reasoning_effort: request.tier === "terra" ? "low" : request.tier === "sol" || request.tier === "luna" ? "high" : "max",
