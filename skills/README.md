@@ -25,7 +25,7 @@ Portable, reviewable workflows inspired by open Agent Skills libraries. These ar
 - Setup and workflow: `docs/ocrmypdf-biorichebrain.md`
 - Batch helper: `scripts/ocrmypdf-batch.sh`
 - The batch helper processes PDFs in one directory, skips existing output files, preserves source PDFs, and reports conversion failures. It requires OCRmyPDF to be installed on the machine where it is run.
-- The skill is documented but is **not yet wired into the extension runtime's explicit skill allowlist**; adding a Markdown file alone does not activate it.
+- The skill is wired into the explicit runtime allowlist for OCR AGENT, MEMORY ENGINE, R&D CHEMIST, TECHNOLOGIST, LEGAL GUARD, REGULATORY WATCHDOG, and QA INSPECTOR. The runtime supplies Markdown instructions only; it does not execute the batch script or install OCRmyPDF.
 
 ## Upstream libraries to evaluate
 - Google Agent Skills: https://github.com/google/skills (Apache-2.0)
