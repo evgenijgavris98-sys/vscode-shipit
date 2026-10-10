@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
 import type { AgentRequest, BrainAgent, BrainProvider } from "./types";
 import type { BrainConfig } from "./config";
+import { loadAgentSkillInstructions } from "./skillLoader";
 
 const ROLE_INSTRUCTIONS: Record<BrainAgent, string> = {
   orchestrator: "You are ORCHESTRATOR for BIORICHEBRAIN. Decompose and synthesize tasks. Distinguish sourced facts, supplier claims, hypotheses and validated results. Do not invent data or approvals.",
@@ -97,7 +98,7 @@ export class KimiProvider implements BrainProvider {
 
   public async run(agent: BrainAgent, request: AgentRequest): Promise<string> {
     const feedback = request.qaFeedback ? `\n\nQA feedback from the previous attempt:\n${request.qaFeedback}` : "";
-    const prompt = `${ROLE_INSTRUCTIONS[agent]}\n\nTask:\n${request.task.input}${feedback}\n\nUse only approved/read-only MCP capabilities. Do not perform external writes, purchases, deployments, legal submissions, or irreversible actions.`;
+    const skillInstructions = await loadAgentSkillInstructions(agent);\n    const prompt = `${ROLE_INSTRUCTIONS[agent]}${skillInstructions}\n\nTask:\n${request.task.input}${feedback}\n\nUse only approved/read-only MCP capabilities. Do not perform external writes, purchases, deployments, legal submissions, or irreversible actions.`;
 
     if (this.config.kimiMcpUrl) {
       return runKimiCli(this.config, prompt, process.cwd());
@@ -119,7 +120,7 @@ export class KimiProvider implements BrainProvider {
         body: JSON.stringify({
           model: this.config.kimiModel,
           messages: [
-            { role: "system", content: ROLE_INSTRUCTIONS[agent] + " Work only within the assigned task. Avoid medical claims. Escalate legal, regulatory, privacy and irreversible actions for human approval." },
+            { role: "system", content: ROLE_INSTRUCTIONS[agent] + skillInstructions + " Work only within the assigned task. Avoid medical claims. Escalate legal, regulatory, privacy and irreversible actions for human approval." },
             { role: "user", content: `${request.task.input}${feedback}` },
           ],
           max_tokens: 8192,
