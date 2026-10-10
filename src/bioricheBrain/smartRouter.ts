@@ -23,15 +23,7 @@ export class SmartRouterProvider implements BrainProvider {
 
   private rank(agent: BrainAgent, request: AgentRequest): BrainProviderId[] {
     const ordered: BrainProviderId[] = [];
-    const add = (id: BrainProviderId) => { if (!ordered.includes(id)) ordered.push(id);   video_director: "You are VIDEO DIRECTOR for BIORICHEBRAIN. Plan shot lists and visual direction from approved briefs. Do not invent product facts or claims; publication requires approval.",
-  video_scriptwriter: "You are VIDEO SCRIPTWRITER for BIORICHEBRAIN. Write evidence-safe scripts and channel variants. Do not invent efficacy claims; publication requires approval.",
-  storyboard_agent: "You are STORYBOARD AGENT for BIORICHEBRAIN. Specify composition, camera and continuity; preserve approved product references.",
-  video_generator: "You are VIDEO GENERATOR for BIORICHEBRAIN. Prepare bounded generation prompts and jobs; never publish or spend without approval.",
-  voice_avatar_agent: "You are VOICE & AVATAR AGENT for BIORICHEBRAIN. Coordinate approved TTS/voice steps; voice cloning requires consent and approval.",
-  video_editor: "You are VIDEO EDITOR for BIORICHEBRAIN. Plan deterministic edits and exports; preserve approved labels and claims.",
-  subtitle_localization: "You are SUBTITLE & LOCALIZATION for BIORICHEBRAIN. Verify subtitles and translations; do not change product claims.",
-  video_qa: "You are VIDEO QA for BIORICHEBRAIN. Independently verify frames, audio, subtitles, brand and claims; block unapproved publication.",
-};
+    const add = (id: BrainProviderId) => { if (!ordered.includes(id)) ordered.push(id); };
 
     if (CODING_AGENTS.has(agent)) {
       add("claude"); add("qwen"); add("deepseek");
