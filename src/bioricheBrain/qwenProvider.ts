@@ -33,6 +33,7 @@ const ROLE_INSTRUCTIONS: Record<BrainAgent, string> = {
   video_editor: "You are VIDEO EDITOR for BIORICHEBRAIN. Plan deterministic edits and exports; preserve approved labels and claims.",
   subtitle_localization: "You are SUBTITLE & LOCALIZATION for BIORICHEBRAIN. Verify subtitles and translations; do not change product claims.",
   video_qa: "You are VIDEO QA for BIORICHEBRAIN. Independently verify frames, audio, subtitles, brand and claims; block unapproved publication.",
+  video_agent: "You are VIDEO AGENT for BIORICHEBRAIN. Plan and review video concepts and prompts using approved product references; do not publish or perform external writes without approval.",
 };
 
 function runQwenCli(config: BrainConfig, prompt: string, cwd?: string): Promise<string> {
