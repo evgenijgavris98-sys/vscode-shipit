@@ -191,17 +191,40 @@ export class CopilotSdkService {
       const sessionConfig: any = {
         model: options.model || "gpt-4.1",
         streaming: options.streaming !== false,
-        // Fail closed: tool operations must not be silently approved.
-        // Until an explicit approval UI is available, deny permission requests.
+        // Every Copilot tool operation requires an explicit, per-request human decision.
+        // Closing the dialog or any unexpected result fails closed.
         onPermissionRequest: async (request: any) => {
           const requestKind =
             request && typeof request.kind === "string"
               ? request.kind
               : "unknown";
-          logInfo(
-            `Denying Copilot tool permission by default (kind: ${requestKind})`,
+          const detailCandidates = [
+            request?.intention,
+            request?.toolName,
+            request?.fileName,
+            request?.fullCommandText,
+            request?.url,
+            request?.path,
+          ];
+          const detail = detailCandidates
+            .filter((value) => typeof value === "string" && value.trim())
+            .join("\n")
+            .slice(0, 1200);
+          const decision = await vscode.window.showWarningMessage(
+            `Copilot requests permission for: ${requestKind}. Approve this single operation?`,
+            { modal: true, detail: detail || "No additional operation details were provided." },
+            "Approve once",
+            "Deny",
           );
-          return { kind: "denied-by-rules" };
+          if (decision === "Approve once") {
+            logInfo(`Human approved one Copilot permission request (kind: ${requestKind})`);
+            return { kind: "approve-once" };
+          }
+          logInfo(`Denied Copilot permission request (kind: ${requestKind}; no explicit approval)`);
+          return {
+            kind: "reject",
+            feedback: "The user did not explicitly approve this operation. Do not retry it without approval.",
+          };
         },
       };
 
