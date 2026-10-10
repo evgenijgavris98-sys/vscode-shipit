@@ -7,6 +7,7 @@ import { MemoryAuditSink, type AuditSink } from "./auditLog";
 import { createAgentDelegationTools } from "./agentDelegation";
 import { createBioricheMcpServers } from "./mcpRegistry";
 import { CheckpointStore } from "./checkpointStore";
+import { loadAgentSkillInstructions } from "./skillLoader";
 
 const ROLE_INSTRUCTIONS: Record<BrainAgent, string> = {
   orchestrator: "You are ORCHESTRATOR for BIORICHEBRAIN. Task decomposition, routing, delegation, synthesis. Work only within assigned scope; distinguish sourced facts, supplier claims, project hypotheses, validated results, and patent candidates. Do not invent data, approvals, or experimental outcomes. Avoid medical claims. Escalate safety, legal, regulatory, privacy, and irreversible actions for human review.",
@@ -81,7 +82,7 @@ export class OpenAIResponsesProvider implements BrainProvider {
 
     const brainAgent = new Agent({
       name: `BIORICHEBRAIN — ${agent}`,
-      instructions: ROLE_INSTRUCTIONS[agent],
+      instructions: ROLE_INSTRUCTIONS[agent] + await loadAgentSkillInstructions(agent),
       model,
       tools: [
         ...(this.workspaceRoot
@@ -146,7 +147,7 @@ export class OpenAIResponsesProvider implements BrainProvider {
     if (checkpoint.agent !== agent) throw new Error("Checkpoint belongs to a different agent.");
     const brainAgent = new Agent({
       name: `BIORICHEBRAIN — ${agent}`,
-      instructions: ROLE_INSTRUCTIONS[agent],
+      instructions: ROLE_INSTRUCTIONS[agent] + await loadAgentSkillInstructions(agent),
       model: this.config.models.terra,
       tools: [
         ...createBrainTools(agent, this.workspaceRoot!, this.approvalGate, this.audit),
