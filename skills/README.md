@@ -18,6 +18,14 @@ Portable, reviewable workflows inspired by open Agent Skills libraries. These ar
 | `analytics-review` | KPI plans, funnel interpretation, test design |
 | `premium-design-brief` | Visual briefs, packaging, creative consistency |
 | `software-engineering` | Small code changes, tests, review and release gates |
+| `ocrmypdf` | Local searchable-PDF ingestion with OCR quality and provenance checks |
+
+## OCRmyPDF helper
+- Skill: `skills/ocrmypdf/SKILL.md`
+- Setup and workflow: `docs/ocrmypdf-biorichebrain.md`
+- Batch helper: `scripts/ocrmypdf-batch.sh`
+- The batch helper processes PDFs in one directory, skips existing output files, preserves source PDFs, and reports conversion failures. It requires OCRmyPDF to be installed on the machine where it is run.
+- The skill is documented but is **not yet wired into the extension runtime's explicit skill allowlist**; adding a Markdown file alone does not activate it.
 
 ## Upstream libraries to evaluate
 - Google Agent Skills: https://github.com/google/skills (Apache-2.0)
