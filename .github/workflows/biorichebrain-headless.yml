@@ -38,3 +38,22 @@ jobs:
       - run: npm run lint
       - name: Build headless service image
         run: docker build -f Dockerfile.biorichebrain -t biorichebrain-headless:ci .
+      - name: Smoke-test container health endpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run -d --name biorichebrain-smoke \
+            -p 127.0.0.1:8787:8787 \
+            -e OPENAI_API_KEY=sk-test-only \
+            -e BIORICHEBRAIN_SERVICE_TOKEN=ci-test-token-with-at-least-32-characters \
+            -e BIORICHEBRAIN_DATA_DIR=/tmp/biorichebrain \
+            biorichebrain-headless:ci
+          trap 'docker rm -f biorichebrain-smoke >/dev/null 2>&1 || true' EXIT
+          for attempt in $(seq 1 20); do
+            if curl --fail --silent http://127.0.0.1:8787/health; then
+              exit 0
+            fi
+            sleep 1
+          done
+          docker logs biorichebrain-smoke
+          exit 1
