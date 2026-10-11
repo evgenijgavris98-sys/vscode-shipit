@@ -50,6 +50,7 @@ export class ScheduledTeamRunner {
   private timer: ReturnType<typeof setInterval> | undefined;
   private running = false;
   private disposed = false;
+  private stateLoaded = false;
   private state: SchedulerState;
 
   public constructor(
@@ -84,6 +85,7 @@ export class ScheduledTeamRunner {
   }
 
   public async stop(): Promise<void> {
+    if (!this.stateLoaded) await this.loadState();
     this.state.enabled = false;
     if (this.timer) clearInterval(this.timer);
     this.timer = undefined;
@@ -91,6 +93,7 @@ export class ScheduledTeamRunner {
   }
 
   public async runNow(): Promise<ScheduledRunResult> {
+    if (!this.stateLoaded) await this.loadState();
     if (this.running) throw new Error("A BIORICHEBRAIN scheduled run is already in progress.");
     return this.executeRun();
   }
@@ -186,6 +189,7 @@ export class ScheduledTeamRunner {
   }
 
   private async loadState(): Promise<void> {
+    if (this.stateLoaded) return;
     try {
       const parsed = JSON.parse(await fs.readFile(this.statePath, "utf8")) as Partial<SchedulerState>;
       if (parsed.version !== 1 || typeof parsed.enabled !== "boolean" ||
@@ -204,9 +208,10 @@ export class ScheduledTeamRunner {
         lastError: typeof parsed.lastError === "string" ? parsed.lastError.slice(0, 1000) : undefined,
       };
     } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === "ENOENT") return;
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") { this.stateLoaded = true; return; }
       throw error;
     }
+    this.stateLoaded = true;
   }
 
   private async saveState(): Promise<void> {
