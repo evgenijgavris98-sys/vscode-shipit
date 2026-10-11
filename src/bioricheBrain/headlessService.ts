@@ -116,7 +116,7 @@ class DurableQueue {
         if (task.status === "queued") this.pending.push(task.id);
         this.tasks.set(task.id, task);
         if (task.idempotencyKey) this.dedupe.set(task.idempotencyKey, task.id);
-        if (task.status === "running" || task.status === "queued") await this.persist(task);
+        if (task.status === "queued") await this.persist(task);
       } catch { /* Ignore malformed individual records; do not crash the whole service. */ }
     }
     void this.drain();
