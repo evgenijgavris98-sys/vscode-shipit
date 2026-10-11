@@ -102,6 +102,18 @@
       {
         "command": "shipit.viewLogs",
         "title": "ShipIt: View Logs"
+      },
+      {
+        "command": "bioricheBrain.cliHubList",
+        "title": "BIORICHEBRAIN: CLI-Hub List Tools"
+      },
+      {
+        "command": "bioricheBrain.cliHubSearch",
+        "title": "BIORICHEBRAIN: CLI-Hub Search Tools"
+      },
+      {
+        "command": "bioricheBrain.cliHubInstall",
+        "title": "BIORICHEBRAIN: CLI-Hub Inspect and Install Tool"
       }
     ],
     "configuration": {
