@@ -115,6 +115,8 @@ Security boundaries in this first bridge:
 
 - [x] Added the CLI-Hub bridge source and three VS Code commands on the integration branch.
 - [x] Added package command contributions.
-- [ ] Run `npm ci`, `npm run compile`, `npm run lint`, and `npm test` in the target checkout.
+- [x] GitHub Actions CI passed on commit `70652cacb8bd830d530936fc877df3f83a17ca71`: `npm run compile` and `npm run lint` passed.
+- [x] Brain CI passed on that commit: `npm ci`, compile, lint, and `xvfb-run -a npm test` passed.
+- [ ] Re-run checks after the latest output-limit hardening commit.
 - [ ] Install `cli-anything-hub` in the intended Python environment and test list/search.
 - [ ] Test one selected harness on disposable files before enabling it for any agent.
