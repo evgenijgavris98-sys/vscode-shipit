@@ -173,8 +173,10 @@ class DurableQueue {
         if (!task || task.status !== "queued") continue;
         task.status = "running";
         task.attempts += 1;
-        await this.persist(task);
         try {
+          // Include the running-state write in the guarded block so disk failures
+          // cannot reject drain() and leave the in-memory worker lock stuck.
+          await this.persist(task);
           const result = await this.team.run(task.input);
           task.result = result.synthesis;
           task.status = "succeeded";
@@ -184,7 +186,14 @@ class DurableQueue {
           task.error = safeError(error);
           if (task.attempts < MAX_ATTEMPTS && !this.stopping) {
             task.status = "queued";
-            await this.persist(task);
+            try {
+              await this.persist(task);
+            } catch (persistError) {
+              task.status = "failed";
+              task.error = "Unable to persist retry state: " + safeError(persistError);
+              await this.recordAudit({ timestamp: new Date().toISOString(), agent: "orchestrator", toolId: "queue.persist", outcome: "failed", runId: task.id, capability: "durable_queue", provenance: "persistence_failure", detail: task.error });
+              continue;
+            }
             await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS * task.attempts));
             this.pending.push(task.id);
             continue;
@@ -192,7 +201,11 @@ class DurableQueue {
           task.status = "failed";
           await this.recordAudit({ timestamp: new Date().toISOString(), agent: "orchestrator", toolId: "queue.run", outcome: "failed", runId: task.id, capability: "read_only_team_review", provenance: "durable_queue", inputSummary: "Task failed; input omitted from audit", detail: task.error });
         }
-        await this.persist(task);
+        try {
+          await this.persist(task);
+        } catch (persistError) {
+          process.stderr.write("BIORICHEBRAIN task state persist failed: " + safeError(persistError) + "\\n");
+        }
       }
     } finally {
       this.active = false;
