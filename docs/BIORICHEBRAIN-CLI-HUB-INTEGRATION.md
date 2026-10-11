@@ -93,3 +93,28 @@ The exact available names must be discovered with `cli-hub search` and `cli-hub 
 ## Important status note
 
 This document records the proposed integration and repeatable setup steps. A GitHub commit does not install software on the user's computer or prove that a local agent runtime can execute it. Mark the checklist complete only after running the commands in the actual BIORICHEBRAIN environment.
+
+
+## Implemented in the ShipIt extension branch
+
+The branch now includes a small opt-in VS Code bridge:
+
+- `BIORICHEBRAIN: CLI-Hub List Tools` — runs `cli-hub list --json`.
+- `BIORICHEBRAIN: CLI-Hub Search Tools` — validates a search query and runs `cli-hub search <query> --json`.
+- `BIORICHEBRAIN: CLI-Hub Inspect and Install Tool` — inspects a named package first, then requires a modal user confirmation before installation.
+
+Implementation: `src/bioricheBrain/cliHub.ts`, registered in `src/extension.ts` and `package.json`.
+
+Security boundaries in this first bridge:
+- Uses Node `spawn` with `shell: false`, fixed command names, validated package/query input, bounded output, and a timeout.
+- It does not automatically launch installed CLIs or allow an LLM to pass arbitrary shell commands.
+- Install is a system-changing action and always requires explicit confirmation.
+- No CLI-Hub command can be executed from this chat against the user's workstation; run the extension on the target machine to verify it.
+
+## Verification state
+
+- [x] Added the CLI-Hub bridge source and three VS Code commands on the integration branch.
+- [x] Added package command contributions.
+- [ ] Run `npm ci`, `npm run compile`, `npm run lint`, and `npm test` in the target checkout.
+- [ ] Install `cli-anything-hub` in the intended Python environment and test list/search.
+- [ ] Test one selected harness on disposable files before enabling it for any agent.
