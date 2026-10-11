@@ -12,6 +12,7 @@ import { TeamOrchestrator } from './bioricheBrain/teamOrchestrator';
 import type { BrainAgent, ModelTier } from './bioricheBrain/types';
 import { VscodeApprovalGate } from './bioricheBrain/vscodeApprovalGate';
 import { JsonlAuditSink } from './bioricheBrain/auditLog';
+import { ScheduledTeamRunner } from './bioricheBrain/scheduledRunner';
 import { ShipItStatusBar } from './statusBar';
 import { LoopOrchestrator } from './orchestrator';
 import { ShipItSidebarProvider } from './sidebarProvider';
@@ -25,6 +26,7 @@ import { getTaskStatsAsync, getNextTaskAsync, createManualPrdAsync, readProjectD
 class ShipItExtension {
     private readonly approvalGate = new VscodeApprovalGate();
     private readonly audit: JsonlAuditSink;
+    private scheduler: ScheduledTeamRunner | undefined;
     private statusBar: ShipItStatusBar;
     private orchestrator: LoopOrchestrator;
     private sidebarProvider: ShipItSidebarProvider;
@@ -60,6 +62,7 @@ class ShipItExtension {
 
         // Check for PRD on startup
         this.checkForPrdOnStartup();
+        void this.startSchedulerIfConfigured();
     }
 
     /**
@@ -186,6 +189,41 @@ class ShipItExtension {
                 }
             }),
 
+            vscode.commands.registerCommand('bioricheBrain.scheduler.start', async () => {
+                try {
+                    const scheduler = this.getOrCreateScheduler();
+                    await scheduler.start();
+                    vscode.window.showInformationMessage('BIORICHEBRAIN scheduler started in this VS Code extension host.');
+                } catch (error) {
+                    vscode.window.showErrorMessage('BIORICHEBRAIN scheduler could not start: ' + (error instanceof Error ? error.message : String(error)));
+                }
+            }),
+            vscode.commands.registerCommand('bioricheBrain.scheduler.stop', async () => {
+                if (!this.scheduler) {
+                    vscode.window.showInformationMessage('BIORICHEBRAIN scheduler is not running.');
+                    return;
+                }
+                await this.scheduler.stop();
+                vscode.window.showInformationMessage('BIORICHEBRAIN scheduler stopped.');
+            }),
+            vscode.commands.registerCommand('bioricheBrain.scheduler.runNow', async () => {
+                try {
+                    const result = await this.getOrCreateScheduler().runNow();
+                    vscode.window.showInformationMessage('BIORICHEBRAIN scheduled review finished: ' + result.outcome);
+                } catch (error) {
+                    vscode.window.showErrorMessage('BIORICHEBRAIN scheduled review failed: ' + (error instanceof Error ? error.message : String(error)));
+                }
+            }),
+            vscode.commands.registerCommand('bioricheBrain.scheduler.status', async () => {
+                const status = this.scheduler?.getStatus();
+                if (!status) {
+                    vscode.window.showInformationMessage('BIORICHEBRAIN scheduler has not been started in this extension session.');
+                    return;
+                }
+                const message = 'Enabled: ' + status.enabled + ' | Next run: ' + status.nextRunAt +
+                    ' | Failures: ' + status.consecutiveFailures + (status.lastError ? ' | Last error: ' + status.lastError : '');
+                vscode.window.showInformationMessage(message);
+            }),
             vscode.commands.registerCommand('bioricheBrain.runTeam', async () => {
                 const config = loadBrainConfig(vscode.workspace.getConfiguration('shipit.bioricheBrain').get<boolean>('enabled'));
                 if (!config.enabled) {
@@ -274,6 +312,31 @@ class ShipItExtension {
         );
     }
 
+    private getOrCreateScheduler(): ScheduledTeamRunner {
+        if (this.scheduler) return this.scheduler;
+        const config = loadBrainConfig(vscode.workspace.getConfiguration('shipit.bioricheBrain').get<boolean>('enabled'));
+        if (!config.enabled) {
+            throw new Error('Enable shipit.bioricheBrain.enabled and configure provider credentials first.');
+        }
+        const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+        if (!workspaceRoot) throw new Error('Open the BIORICHEBRAIN project workspace first.');
+        const intervalHours = vscode.workspace.getConfiguration('shipit.bioricheBrain.scheduler').get<number>('intervalHours', 24);
+        const team = new TeamOrchestrator(this.createSmartRouter(config));
+        this.scheduler = new ScheduledTeamRunner(this.context.globalStorageUri.fsPath, workspaceRoot, team, this.audit, intervalHours);
+        return this.scheduler;
+    }
+
+    private async startSchedulerIfConfigured(): Promise<void> {
+        const schedulerEnabled = vscode.workspace.getConfiguration('shipit.bioricheBrain.scheduler').get<boolean>('enabled', false);
+        if (!schedulerEnabled) return;
+        try {
+            await this.getOrCreateScheduler().start();
+            log('BIORICHEBRAIN scheduled team runner started in the VS Code extension host.');
+        } catch (error) {
+            log('BIORICHEBRAIN scheduler not started: ' + (error instanceof Error ? error.message : String(error)));
+        }
+    }
+
     private createSmartRouter(config: ReturnType<typeof loadBrainConfig>): BrainProvider {
         return new SmartRouterProvider(config, (id) => this.createBrainProvider({ ...config, provider: id }));
     }
@@ -344,6 +407,7 @@ class ShipItExtension {
      * Dispose resources
      */
     dispose(): void {
+        this.scheduler?.dispose();
         this.orchestrator.dispose();
         disposeLogger();
     }
