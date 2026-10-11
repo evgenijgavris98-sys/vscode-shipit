@@ -73,7 +73,7 @@
       {
         "command": "bioricheBrain.scheduler.status",
         "title": "BIORICHEBRAIN: Scheduler Status"
-      }
+      },
       {
         "command": "bioricheBrain.runAgent",
         "title": "BIORICHEBRAIN: Run Agent"
