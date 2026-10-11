@@ -1,0 +1,39 @@
+name: BIORICHEBRAIN headless runtime checks
+
+on:
+  pull_request:
+    paths:
+      - "src/bioricheBrain/**"
+      - "Dockerfile.biorichebrain"
+      - "docker-compose.biorichebrain.yml"
+      - "package.json"
+      - "tsconfig.json"
+      - ".github/workflows/biorichebrain-headless.yml"
+  push:
+    branches:
+      - main
+      - "biorichebrain/**"
+    paths:
+      - "src/bioricheBrain/**"
+      - "Dockerfile.biorichebrain"
+      - "docker-compose.biorichebrain.yml"
+      - "package.json"
+      - "tsconfig.json"
+      - ".github/workflows/biorichebrain-headless.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm install --no-audit --no-fund
+      - run: npm run compile
+      - run: npm run lint
