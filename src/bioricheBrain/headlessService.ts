@@ -35,6 +35,8 @@ function json(res: ServerResponse, status: number, payload: unknown): void {
 function safeError(error: unknown): string {
   return (error instanceof Error ? error.message : String(error))
     .replace(/(api[_-]?key|token|password|secret)\s*[:=]\s*\S+/gi, "$1=[REDACTED]")
+    .replace(/\bsk-[A-Za-z0-9_-]{12,}\b/g, "[REDACTED_KEY]")
+    .replace(/\bgh[pousr]_[A-Za-z0-9_]{20,}\b/g, "[REDACTED_GITHUB_TOKEN]")
     .slice(0, 1000);
 }
 function authOk(req: IncomingMessage, expected: string): boolean {
