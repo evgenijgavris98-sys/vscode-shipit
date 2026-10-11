@@ -119,7 +119,9 @@ class DurableQueue {
     }
     void this.drain();
   }
-  public listCount(): number { return this.pending.length + (this.active ? 1 : 0); }
+  public listCount(): number {
+    return Array.from(this.tasks.values()).filter((task) => task.status === "queued" || task.status === "running").length;
+  }
   public findByKey(key: string): QueueTask | undefined {
     const id = this.dedupe.get(key);
     return id ? this.tasks.get(id) : undefined;
@@ -132,15 +134,29 @@ class DurableQueue {
     if (this.listCount() >= MAX_QUEUE) throw new Error("Queue capacity reached; retry later.");
     const now = new Date().toISOString();
     const task: QueueTask = { id: randomUUID(), idempotencyKey, input, status: "queued", createdAt: now, updatedAt: now, attempts: 0 };
-    await this.persist(task);
     this.tasks.set(task.id, task);
     if (idempotencyKey) this.dedupe.set(idempotencyKey, task.id);
+    try {
+      await this.persist(task);
+    } catch (error) {
+      this.tasks.delete(task.id);
+      if (idempotencyKey) this.dedupe.delete(idempotencyKey);
+      throw error;
+    }
     this.pending.push(task.id);
     void this.drain();
     return task;
   }
   public get(id: string): QueueTask | undefined { return this.tasks.get(id); }
   public async stop(): Promise<void> { this.stopping = true; }
+  private async recordAudit(event: Parameters<JsonlAuditSink["record"]>[0]): Promise<void> {
+    try {
+      await this.audit.record(event);
+    } catch (error) {
+      // A logging failure must not strand a durable task in the "running" state.
+      process.stderr.write("BIORICHEBRAIN audit write failed: " + safeError(error) + "\\n");
+    }
+  }
   private async persist(task: QueueTask): Promise<void> {
     task.updatedAt = new Date().toISOString();
     await atomicWrite(join(TASK_DIR, task.id + ".json"), task);
@@ -160,7 +176,8 @@ class DurableQueue {
           const result = await this.team.run(task.input);
           task.result = result.synthesis;
           task.status = "succeeded";
-          await this.audit.record({ timestamp: new Date().toISOString(), agent: "orchestrator", toolId: "queue.run", outcome: "allowed", runId: task.id, capability: "read_only_team_review", provenance: "durable_queue", inputSummary: "Task completed; input omitted from audit" });
+          await this.persist(task);
+          await this.recordAudit({ timestamp: new Date().toISOString(), agent: "orchestrator", toolId: "queue.run", outcome: "allowed", runId: task.id, capability: "read_only_team_review", provenance: "durable_queue", inputSummary: "Task completed; input omitted from audit" });
         } catch (error) {
           task.error = safeError(error);
           if (task.attempts < MAX_ATTEMPTS && !this.stopping) {
@@ -171,7 +188,7 @@ class DurableQueue {
             continue;
           }
           task.status = "failed";
-          await this.audit.record({ timestamp: new Date().toISOString(), agent: "orchestrator", toolId: "queue.run", outcome: "failed", runId: task.id, capability: "read_only_team_review", provenance: "durable_queue", inputSummary: "Task failed; input omitted from audit", detail: task.error });
+          await this.recordAudit({ timestamp: new Date().toISOString(), agent: "orchestrator", toolId: "queue.run", outcome: "failed", runId: task.id, capability: "read_only_team_review", provenance: "durable_queue", inputSummary: "Task failed; input omitted from audit", detail: task.error });
         }
         await this.persist(task);
       }
