@@ -39,7 +39,7 @@ function normalizeEvent(event: AuditEvent): AuditEvent & { eventId: string; inpu
   const detail = event.detail === undefined ? undefined : redactAuditText(event.detail);
   const inputDigest = event.inputSummary === undefined
     ? undefined
-    : createHash("sha256").update(event.inputSummary).digest("hex");
+    : createHash("sha256").update(inputSummary ?? "").digest("hex");
   return {
     ...event,
     eventId: randomUUID(),
