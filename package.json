@@ -58,7 +58,7 @@
         "command": "bioricheBrain.runTeam",
         "title": "BIORICHEBRAIN: Run Team"
       },
-      ,{
+      {
         "command": "bioricheBrain.scheduler.start",
         "title": "BIORICHEBRAIN: Start Scheduled Team"
       },
