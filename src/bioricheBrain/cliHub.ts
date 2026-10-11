@@ -4,7 +4,7 @@ import * as vscode from 'vscode';
 /** Safe, opt-in bridge to CLI-Anything Hub. No shell is used. */
 const HUB = 'cli-hub';
 const SAFE_NAME = /^[a-z0-9][a-z0-9._-]{0,63}$/i;
-const SAFE_QUERY = /^[\\p{L}\\p{N} ._-]{1,100}$/u;
+const SAFE_QUERY = /^[\p{L}\p{N} ._-]{1,100}$/u;
 
 export interface HubResult { code: number | null; stdout: string; stderr: string; }
 
