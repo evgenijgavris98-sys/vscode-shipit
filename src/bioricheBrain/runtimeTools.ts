@@ -31,10 +31,10 @@ export function createBrainTools(
       }
       try {
         const content = await readFile(target, "utf8");
-        await audit.record({ timestamp: new Date().toISOString(), agent, toolId: definition.id, outcome: "allowed", inputSummary: summarizeInput({ path }) });
+        await audit.record({ timestamp: new Date().toISOString(), agent, toolId: definition.id, capability: definition.id, provenance: "tool_invocation", outcome: "allowed", inputSummary: summarizeInput({ path }) });
         return content.slice(0, 30000);
       } catch (error) {
-        await audit.record({ timestamp: new Date().toISOString(), agent, toolId: definition.id, outcome: "failed", inputSummary: summarizeInput({ path }), detail: String(error) });
+        await audit.record({ timestamp: new Date().toISOString(), agent, toolId: definition.id, capability: definition.id, provenance: "tool_invocation", outcome: "failed", inputSummary: summarizeInput({ path }), detail: String(error) });
         throw error;
       }
     },
@@ -47,7 +47,7 @@ export function createBrainTools(
     execute: async ({ query, limit }) => {
       const definition = authorizeToolInvocation({ toolId: "memory.read", agent, input: { query, limit } });
       const records = await memory.list(query, limit);
-      await audit.record({ timestamp: new Date().toISOString(), agent, toolId: definition.id, outcome: "allowed", inputSummary: summarizeInput({ query, limit }) });
+      await audit.record({ timestamp: new Date().toISOString(), agent, toolId: definition.id, capability: definition.id, provenance: "tool_invocation", outcome: "allowed", inputSummary: summarizeInput({ query, limit }) });
       return JSON.stringify(records);
     },
   });
@@ -64,7 +64,7 @@ export function createBrainTools(
     }),
     execute: async (input) => {
       const definition = authorizeToolInvocation({ toolId: "memory.write", agent, input });
-      await audit.record({ timestamp: new Date().toISOString(), agent, toolId: definition.id, outcome: "approval_required", inputSummary: summarizeInput(input) });
+      await audit.record({ timestamp: new Date().toISOString(), agent, toolId: definition.id, capability: definition.id, provenance: "tool_invocation", outcome: "approval_required", inputSummary: summarizeInput(input) });
       const approved = await approvalGate.requestApproval({
         agent,
         tool: definition,
@@ -72,11 +72,11 @@ export function createBrainTools(
         inputSummary: summarizeInput(input),
       });
       if (!approved) {
-        await audit.record({ timestamp: new Date().toISOString(), agent, toolId: definition.id, outcome: "denied", inputSummary: summarizeInput(input) });
+        await audit.record({ timestamp: new Date().toISOString(), agent, toolId: definition.id, capability: definition.id, provenance: "tool_invocation", outcome: "denied", inputSummary: summarizeInput(input) });
         throw new Error("Human approval was not granted for memory.write.");
       }
       const record = await memory.write(input as { status: MemoryStatus; topic: string; content: string; source?: string; supersedes?: string });
-      await audit.record({ timestamp: new Date().toISOString(), agent, toolId: definition.id, outcome: "approved", inputSummary: summarizeInput(input) });
+      await audit.record({ timestamp: new Date().toISOString(), agent, toolId: definition.id, capability: definition.id, provenance: "tool_invocation", outcome: "approved", inputSummary: summarizeInput(input) });
       return JSON.stringify(record);
     },
   });
