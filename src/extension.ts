@@ -11,7 +11,7 @@ import type { BrainProvider } from './bioricheBrain/types';
 import { TeamOrchestrator } from './bioricheBrain/teamOrchestrator';
 import type { BrainAgent, ModelTier } from './bioricheBrain/types';
 import { VscodeApprovalGate } from './bioricheBrain/vscodeApprovalGate';
-import { MemoryAuditSink } from './bioricheBrain/auditLog';
+import { JsonlAuditSink } from './bioricheBrain/auditLog';
 import { ShipItStatusBar } from './statusBar';
 import { LoopOrchestrator } from './orchestrator';
 import { ShipItSidebarProvider } from './sidebarProvider';
@@ -24,12 +24,13 @@ import { getTaskStatsAsync, getNextTaskAsync, createManualPrdAsync, readProjectD
  */
 class ShipItExtension {
     private readonly approvalGate = new VscodeApprovalGate();
-    private readonly audit = new MemoryAuditSink();
+    private readonly audit: JsonlAuditSink;
     private statusBar: ShipItStatusBar;
     private orchestrator: LoopOrchestrator;
     private sidebarProvider: ShipItSidebarProvider;
 
     constructor(private readonly context: vscode.ExtensionContext) {
+        this.audit = new JsonlAuditSink(vscode.Uri.joinPath(context.globalStorageUri, "biorichebrain-audit.jsonl").fsPath);
         log('ShipIt extension activating...');
 
         this.statusBar = new ShipItStatusBar();
