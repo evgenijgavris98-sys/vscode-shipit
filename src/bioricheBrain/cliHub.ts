@@ -11,14 +11,24 @@ export interface HubResult { code: number | null; stdout: string; stderr: string
 export function runHub(args: string[], timeoutMs = 30_000): Promise<HubResult> {
   return new Promise((resolve, reject) => {
     const child = spawn(HUB, args, { shell: false, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
-    let stdout = '', stderr = '', settled = false;
+    let stdout = '', stderr = '', settled = false, outputLimitExceeded = false;
     const finish = (fn: () => void) => { if (!settled) { settled = true; clearTimeout(timer); fn(); } };
     const timer = setTimeout(() => { child.kill(); finish(() => reject(new Error('cli-hub timed out'))); }, timeoutMs);
     child.stdout.setEncoding('utf8'); child.stderr.setEncoding('utf8');
-    child.stdout.on('data', chunk => { stdout += chunk; if (stdout.length > 1_000_000) child.kill(); });
-    child.stderr.on('data', chunk => { stderr += chunk; if (stderr.length > 200_000) child.kill(); });
+    child.stdout.on('data', (chunk: string) => {
+      const remaining = 1_000_000 - stdout.length;
+      if (chunk.length > remaining) { stdout += chunk.slice(0, Math.max(0, remaining)); outputLimitExceeded = true; child.kill(); }
+      else stdout += chunk;
+    });
+    child.stderr.on('data', (chunk: string) => {
+      const remaining = 200_000 - stderr.length;
+      if (chunk.length > remaining) { stderr += chunk.slice(0, Math.max(0, remaining)); outputLimitExceeded = true; child.kill(); }
+      else stderr += chunk;
+    });
     child.on('error', error => finish(() => reject(new Error('Cannot start cli-hub. Install cli-anything-hub and ensure cli-hub is on PATH. ' + error.message))));
-    child.on('close', code => finish(() => resolve({ code, stdout, stderr })));
+    child.on('close', code => finish(() => outputLimitExceeded
+      ? reject(new Error('cli-hub output exceeded the safety limit; process was stopped'))
+      : resolve({ code, stdout, stderr })));
   });
 }
 
