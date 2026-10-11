@@ -1,0 +1,70 @@
+name: BIORICHEBRAIN headless runtime checks
+
+on:
+  pull_request:
+    paths:
+      - "src/bioricheBrain/**"
+      - "Dockerfile.biorichebrain"
+      - "docker-compose.biorichebrain.yml"
+      - "package.json"
+      - "tsconfig.json"
+      - ".github/workflows/biorichebrain-headless.yml"
+  push:
+    branches:
+      - main
+      - "biorichebrain/**"
+    paths:
+      - "src/bioricheBrain/**"
+      - "Dockerfile.biorichebrain"
+      - "docker-compose.biorichebrain.yml"
+      - "package.json"
+      - "tsconfig.json"
+      - ".github/workflows/biorichebrain-headless.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci --no-audit --no-fund
+      - run: npm run compile
+      - run: npm run lint
+      - name: Build headless service image
+        run: docker build -f Dockerfile.biorichebrain -t biorichebrain-headless:ci .
+      - name: Smoke-test container health endpoint
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run -d --name biorichebrain-smoke \
+            -p 127.0.0.1:8787:8787 \
+            -e OPENAI_API_KEY=sk-test-only \
+            -e BIORICHEBRAIN_SERVICE_TOKEN=ci-test-token-with-at-least-32-characters \
+            -e BIORICHEBRAIN_DATA_DIR=/tmp/biorichebrain \
+            biorichebrain-headless:ci
+          trap 'docker rm -f biorichebrain-smoke >/dev/null 2>&1 || true' EXIT
+          healthy=0
+          for attempt in $(seq 1 20); do
+            if curl --fail --silent http://127.0.0.1:8787/health; then
+              healthy=1
+              break
+            fi
+            sleep 1
+          done
+          if [ "$healthy" -ne 1 ]; then
+            docker logs biorichebrain-smoke
+            exit 1
+          fi
+          token=ci-test-token-with-at-least-32-characters
+          unauth_status="$(curl --silent --output /dev/null --write-out '%{http_code}' http://127.0.0.1:8787/metrics)"
+          test "$unauth_status" = "401"
+          auth_status="$(curl --silent --output /dev/null --write-out '%{http_code}' -H "Authorization: Bearer $token" http://127.0.0.1:8787/metrics)"
+          test "$auth_status" = "200"
+          invalid_status="$(curl --silent --output /dev/null --write-out '%{http_code}' -X POST -H "Authorization: Bearer $token" -H "Content-Type: application/json" -d '{"input":""}' http://127.0.0.1:8787/tasks)"
+          test "$invalid_status" = "400"
