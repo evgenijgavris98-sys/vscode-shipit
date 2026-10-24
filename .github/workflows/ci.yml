@@ -19,6 +19,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm install --ignore-scripts
+      - name: Enforce MCP dependency policy
+        run: node scripts/check-mcp-deps.mjs
       - name: Capture dependency audit report
         run: npm audit --json > npm-audit.json || true
       - name: Upload dependency audit report
