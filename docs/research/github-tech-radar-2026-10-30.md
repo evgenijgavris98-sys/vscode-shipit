@@ -44,10 +44,10 @@ Keep the existing BIORICHEBRAIN runtime and add a control plane only after a bou
 
 ## Installation status and limits
 
-- **GitHub integration:** this repository contains the radar expansion and this review document on a dedicated branch. It is not yet merged.
+- **GitHub integration:** the radar expansion and this review document are merged into `main` in PR #49. The isolated Paperclip pilot runbook and bootstrap helper were subsequently merged in PR #50.
 - **Local application install:** GitHub repository access does not provide a shell on the user's computer. No desktop app, server, package or service has been installed on the user's device by this review.
 - **No secrets touched:** no API keys, browser profiles, cookies or production credentials were requested or transferred.
-- **Next local step for Paperclip:** follow the upstream Quickstart at https://docs.paperclip.ing and use an isolated test deployment. Check the current Node/pnpm requirements in the upstream repository before installing; do not run an unreviewed remote shell script as root.
+- **Next local step for Paperclip:** from the target computer, clone this repository and run `bash scripts/paperclip-pilot.sh`. The helper checks Node.js 24.11+ and launches the upstream onboarding flow. Follow `docs/integrations/paperclip-pilot.md`; keep the instance local-only and test-only.
 
 ## Sources checked
 
