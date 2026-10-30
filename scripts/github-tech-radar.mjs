@@ -28,7 +28,11 @@ const queries = [
   "agent memory MCP TypeScript",
   "browser agent Playwright TypeScript",
   "LLM eval observability TypeScript",
-  "AI video generation TypeScript"
+  "AI video generation TypeScript",
+  "local first multi agent desktop AI team",
+  "AI workforce orchestration agent company",
+  "computer use desktop agent sandbox",
+  "persistent agent workspace task queue browser"
 ];
 
 const now = Date.now();
@@ -63,8 +67,18 @@ const why = r => r.name.includes("context-mode")
   ? "Context/tool-output optimization; directly relevant to agent context cost."
   : r.name.includes("paperclip")
   ? "Agent workforce/orchestration pattern; benchmark against our company-agent model."
-  : r.name.includes("symphony")
-  ? "Long-running task-to-agent orchestration; benchmark bounded delegation and recovery."
+  : r.name.toLowerCase().includes("orkas")
+  ? "Local-first multi-agent desktop team; compare persistent projects and scheduled work."
+  : r.name.toLowerCase().includes("openbot")
+  ? "Persistent agent workspaces and browser; license review is mandatory before commercial use."
+  : r.name.toLowerCase().includes("browser-use")
+  ? "Browser automation candidate; compare with the already staged ego-browser integration."
+  : r.name.toLowerCase().includes("cua")
+  ? "Computer-use sandbox/driver; evaluate platform coverage and isolation boundaries."
+  : r.name.toLowerCase().includes("openmuse")
+  ? "Personal-agent workspace with browser, terminal and files; alpha-stage evaluation only."
+  : /workforce|orchestrat|paperclip/i.test(r.name + " " + r.description)
+  ? "Agent workforce control plane; benchmark org chart, governance, budget and heartbeat execution."
   : /mcp/i.test(r.name + " " + r.description)
   ? "MCP/tool-boundary candidate."
   : /agent/i.test(r.description)
