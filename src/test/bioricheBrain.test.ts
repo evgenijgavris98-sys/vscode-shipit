@@ -104,10 +104,10 @@ test("maps only curated skills to named BIORICHEBRAIN agents", () => {
   assert.deepEqual(getSkillIdsForAgent("orchestrator"), []);
 });
 
-test("maps ECC-derived reviewed skills to existing specialist roles only", () => {
-  assert.deepEqual(getSkillIdsForAgent("qa_inspector"), ["software-engineering", "code-review", "plan-and-verify"]);
+test("maps ECC-derived reviewed skills to existing specialist roles without dropping legacy skills", () => {
+  assert.deepEqual(getSkillIdsForAgent("qa_inspector"), ["software-engineering", "ocrmypdf", "code-review", "plan-and-verify"]);
   assert.deepEqual(getSkillIdsForAgent("devops"), ["software-engineering", "security-review", "release-readiness"]);
   assert.deepEqual(getSkillIdsForAgent("market_analyst"), ["growth-marketing", "analytics-review", "research-first", "documentation-lookup"]);
-  assert.deepEqual(getSkillIdsForAgent("rd_chemist"), ["research-first", "documentation-lookup", "plan-and-verify"]);
+  assert.deepEqual(getSkillIdsForAgent("rd_chemist"), ["ocrmypdf", "research-first", "documentation-lookup", "plan-and-verify"]);
   assert.deepEqual(getSkillIdsForAgent("orchestrator"), []);
 });
