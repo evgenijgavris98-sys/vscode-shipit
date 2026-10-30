@@ -6,7 +6,7 @@
 
 - Upstream: https://github.com/paperclipai/paperclip
 - Docs: https://docs.paperclip.ing
-- Quickstart: Node.js **24.11+** and `npx paperclipai@latest onboard --yes`.
+- Quickstart: Node.js **24.11+** and `npx paperclipai onboard --yes`. The local-development path also requires pnpm 9+ if running from a source clone.
 - The upstream quickstart defaults to trusted local loopback mode. Do not switch to LAN/tailnet/public binding for this pilot.
 - Docker alternative: upstream documents `docker compose -f docker/docker-compose.quickstart.yml up --build`; review the current compose file and bind address before running it.
 
@@ -20,7 +20,7 @@ cd vscode-shipit
 bash scripts/paperclip-pilot.sh
 ```
 
-The helper checks Node.js and launches the upstream onboarding command. It does not create an agent, connect accounts, add API keys, or import production data.
+The helper checks Node.js and launches the upstream onboarding command. It does not create an agent, connect accounts, add API keys, or import production data. The upstream quickstart creates a local config, initialises embedded PostgreSQL, and starts the server at `http://localhost:3100`.
 
 To pin a Paperclip npm version after checking the upstream release, set `PAPERCLIP_VERSION`:
 
@@ -32,20 +32,23 @@ Default version is `latest`, which is convenient for a first test but not reprod
 
 ## Pilot configuration — do these manually in the local UI
 
-1. Create a separate organization named `BIORICHEBRAIN — TEST`.
-2. Add exactly one non-critical test agent (no production role, no production credentials).
-3. Start with no external connections. Do not connect the production GitHub account, marketplace, email, regulatory accounts, browser profile, or payment systems.
-4. Set the smallest available agent/project/company budget and require human approval for external actions, installs, writes, and messages.
-5. Test one task lifecycle: create → assign → run → pause/cancel → inspect run history.
-6. Test heartbeat with a harmless read-only task. Confirm what wakes the agent and what permissions it inherits.
-7. Test backup/export and restore in the test organization before adding any real project data.
-8. Record the Paperclip version, runtime/harness, model, budget, permissions, and test outcomes in the pilot log below.
+1. Create a separate company named `BIORICHEBRAIN TEST` (do not reuse a production company).
+2. The first agent in a Paperclip company is automatically the CEO. Create it as `Pilot Coordinator — TEST`; its CEO role exists only inside this isolated test company.
+3. Select an adapter/runtime that is already installed and authenticated on the host. Do not create or paste a provider key into GitHub, chat, task text, or this repository. If no local runtime is already authenticated, stop at the agent setup screen until the owner chooses a provider and understands its charges.
+4. Give the agent the title `Read-only Pilot Coordinator`. Keep heartbeat scheduling **off**. Do not connect the production GitHub account, marketplace, email, regulatory accounts, browser profile, or payment systems.
+5. Set the smallest available company/agent budget before running anything. Require human approval for external actions, installs, writes, and messages.
+6. Give it only this first task: `Read the company goal and describe the test company's current setup. Do not call external services, browse the web, modify files, create integrations, send messages, or spend money. Return a short status report and list any permissions you would need before taking action.`
+7. Run the task once manually. Verify the report, then test pause/cancel and inspect run history. Do not enable scheduled heartbeats yet.
+8. Test a harmless read-only heartbeat only after confirming its inherited permissions and budget. Keep it disabled again after the test.
+9. Test backup/export and restore in the test company before adding any real project data.
+10. Record the Paperclip version, runtime/harness, model, budget, permissions, and test outcomes in the pilot log below.
 
 ## Acceptance gate before any production connection
 
 - [ ] Local-only access verified; no public/LAN listener.
 - [ ] Test organization is separate from production.
-- [ ] One test agent only; no broad tool permissions.
+- [ ] One test company and one test CEO agent only; no broad tool permissions.
+- [ ] Heartbeat remains off except for a supervised test.
 - [ ] Approval gates tested and enforced.
 - [ ] Budget limit and stop behavior tested.
 - [ ] Secrets are scoped to the intended agent and absent from task logs.
@@ -81,4 +84,6 @@ Paperclip is a candidate **operations layer**, not the BIORICHEBRAIN brain itsel
 ## Upstream references
 
 - https://github.com/paperclipai/paperclip
+- https://docs.paperclip.ing/guides/getting-started/installation/
+- https://docs.paperclip.ing/guides/getting-started/your-first-agent/
 - https://docs.paperclip.ing/reference/deploy/docker/
