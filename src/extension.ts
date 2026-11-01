@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { showHubList, searchHub, installHubTool } from './bioricheBrain/cliHub';
 import { AGENT_REGISTRY } from './bioricheBrain/agentRegistry';
 import { loadBrainConfig } from './bioricheBrain/config';
 import { OpenAIResponsesProvider } from './bioricheBrain/openaiProvider';
@@ -66,6 +67,9 @@ class ShipItExtension {
      */
     private registerCommands(): void {
         this.context.subscriptions.push(
+            vscode.commands.registerCommand('bioricheBrain.cliHubList', showHubList),
+            vscode.commands.registerCommand('bioricheBrain.cliHubSearch', searchHub),
+            vscode.commands.registerCommand('bioricheBrain.cliHubInstall', installHubTool),
             vscode.commands.registerCommand('shipit.showPanel', () => {
                 this.showStatus();
             }),
