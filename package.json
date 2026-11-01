@@ -59,6 +59,22 @@
         "title": "BIORICHEBRAIN: Run Team"
       },
       {
+        "command": "bioricheBrain.scheduler.start",
+        "title": "BIORICHEBRAIN: Start Scheduled Team"
+      },
+      {
+        "command": "bioricheBrain.scheduler.stop",
+        "title": "BIORICHEBRAIN: Stop Scheduled Team"
+      },
+      {
+        "command": "bioricheBrain.scheduler.runNow",
+        "title": "BIORICHEBRAIN: Run Scheduled Team Now"
+      },
+      {
+        "command": "bioricheBrain.scheduler.status",
+        "title": "BIORICHEBRAIN: Scheduler Status"
+      },
+      {
         "command": "bioricheBrain.runAgent",
         "title": "BIORICHEBRAIN: Run Agent"
       },
@@ -148,6 +164,18 @@
           "type": "boolean",
           "default": false,
           "description": "Enable BIORICHEBRAIN agent execution. Requires OPENAI_API_KEY in the extension host environment."
+        },
+        "shipit.bioricheBrain.scheduler.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Start the BIORICHEBRAIN scheduled team review when VS Code activates. This is not a standalone 24/7 service."
+        },
+        "shipit.bioricheBrain.scheduler.intervalHours": {
+          "type": "number",
+          "default": 24,
+          "minimum": 1,
+          "maximum": 168,
+          "description": "Hours between scheduled BIORICHEBRAIN team reviews (1-168)."
         }
       }
     }
