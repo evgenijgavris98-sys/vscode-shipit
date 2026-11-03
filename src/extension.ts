@@ -17,6 +17,7 @@ import { LoopOrchestrator } from './orchestrator';
 import { ShipItSidebarProvider } from './sidebarProvider';
 import { log, disposeLogger, showLogs } from './logger';
 import { runDevopsSandbox } from './bioricheBrain/sandboxRunner';
+import { checkMiroFishHealth } from './bioricheBrain/mirofishClient';
 import { getTaskStatsAsync, getNextTaskAsync, createManualPrdAsync, readProjectDescriptionAsync, createOrOpenProjectDescriptionAsync } from './fileUtils';
 
 /**
@@ -66,6 +67,23 @@ class ShipItExtension {
      */
     private registerCommands(): void {
         this.context.subscriptions.push(
+            vscode.commands.registerCommand('bioricheBrain.mirofishHealth', async () => {
+                const output = vscode.window.createOutputChannel('BIORICHEBRAIN — MiroFish');
+                this.context.subscriptions.push(output);
+                output.show(true);
+                output.appendLine('Checking local MiroFish health endpoint (read-only)…');
+                try {
+                    const result = await checkMiroFishHealth('http://127.0.0.1:5001');
+                    output.appendLine(result.message);
+                    output.appendLine(`HTTP status: ${result.status}`);
+                    if (result.service) output.appendLine(`Service: ${result.service}`);
+                    vscode.window.showInformationMessage(result.message);
+                } catch (error) {
+                    const message = error instanceof Error ? error.message : String(error);
+                    output.appendLine(`Health check failed: ${message}`);
+                    vscode.window.showWarningMessage(`BIORICHEBRAIN / MiroFish: ${message}`);
+                }
+            }),
             vscode.commands.registerCommand('shipit.showPanel', () => {
                 this.showStatus();
             }),
