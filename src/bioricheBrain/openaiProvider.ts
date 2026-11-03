@@ -75,7 +75,7 @@ export class OpenAIResponsesProvider implements BrainProvider {
     const feedback = request.qaFeedback ? `\n\nQA feedback from the previous attempt:\n${request.qaFeedback}` : "";
     const model = this.config.models[request.tier];
 
-    const mcpServers = createBioricheMcpServers();
+    const mcpServers = createBioricheMcpServers(agent);
     const connectedMcp = mcpServers.length > 0
       ? await connectMcpServers(mcpServers, { connectInParallel: true })
       : undefined;
