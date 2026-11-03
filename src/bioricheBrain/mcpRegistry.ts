@@ -1,3 +1,4 @@
+import type { BrainAgent } from "./types";
 import {
   MCPServerStdio,
   MCPServerStreamableHttp,
@@ -61,6 +62,55 @@ function csvEnv(name: string): string[] {
     .filter(Boolean);
 }
 
+const WORKSPACE_AGENT_TOOLS: Partial<Record<BrainAgent, readonly string[]>> = {
+  sales_bot: [
+    "search_gmail_messages",
+    "get_gmail_message_content",
+    "get_gmail_messages_content_batch",
+    "search_drive_files",
+    "get_drive_file_content",
+    "list_calendars",
+    "get_events",
+  ],
+  customer_success: [
+    "search_gmail_messages",
+    "get_gmail_message_content",
+    "get_gmail_messages_content_batch",
+  ],
+  data_scientist: [
+    "search_drive_files",
+    "get_drive_file_content",
+    "get_doc_content",
+    "read_sheet_values",
+  ],
+  market_analyst: [
+    "search_drive_files",
+    "get_drive_file_content",
+    "get_doc_content",
+    "read_sheet_values",
+  ],
+  procurement_agent: [
+    "search_drive_files",
+    "get_drive_file_content",
+    "get_doc_content",
+    "read_sheet_values",
+  ],
+  supply_chain: [
+    "search_drive_files",
+    "get_drive_file_content",
+    "get_doc_content",
+    "read_sheet_values",
+  ],
+};
+
+export function getBioricheWorkspaceToolsForAgent(agent: BrainAgent): string[] {
+  const enabledAgents = csvEnv("BIORICHEBRAIN_GOOGLE_WORKSPACE_AGENTS") as BrainAgent[];
+  if (!enabledAgents.includes(agent)) return [];
+  const roleTools = WORKSPACE_AGENT_TOOLS[agent] ?? [];
+  const presetTools = PRESETS["google-workspace"].allowedTools;
+  return roleTools.filter((name) => presetTools.includes(name));
+}
+
 /**
  * Optional built-in MCP connectors. Nothing is enabled unless explicitly listed
  * in BIORICHEBRAIN_MCP_PRESETS, preserving deny-by-default network/process behavior.
@@ -68,7 +118,7 @@ function csvEnv(name: string): string[] {
  * The preset surface is read-only by default. Mutating browser/input capabilities
  * must be added only behind BIORICHEBRAIN approval/audit controls.
  */
-export function createBioricheMcpServers() {
+export function createBioricheMcpServers(agent?: BrainAgent) {
   const presetIds = csvEnv("BIORICHEBRAIN_MCP_PRESETS") as BioricheMcpPreset["id"][];
   const servers = [];
 
@@ -76,7 +126,12 @@ export function createBioricheMcpServers() {
     const preset = PRESETS[id];
     if (!preset) continue;
 
-    const toolFilter = createMCPToolStaticFilter({ allowed: preset.allowedTools });
+    const allowedTools = id === "google-workspace"
+      ? (agent ? getBioricheWorkspaceToolsForAgent(agent) : [])
+      : preset.allowedTools;
+    if (allowedTools.length === 0) continue;
+
+    const toolFilter = createMCPToolStaticFilter({ allowed: allowedTools });
 
     if (preset.transport === "stdio") {
       servers.push(
