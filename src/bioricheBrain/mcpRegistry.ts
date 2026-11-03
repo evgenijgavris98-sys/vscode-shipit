@@ -49,6 +49,11 @@ const PRESETS: Record<BioricheMcpPreset["id"], BioricheMcpPreset> = {\n  "google
   },
 };
 
+export function getBioricheMcpPreset(id: string): BioricheMcpPreset | undefined {
+  const preset = PRESETS[id as BioricheMcpPreset["id"]];
+  return preset ? { ...preset, allowedTools: [...preset.allowedTools] } : undefined;
+}
+
 function csvEnv(name: string): string[] {
   return (process.env[name] ?? "")
     .split(",")
