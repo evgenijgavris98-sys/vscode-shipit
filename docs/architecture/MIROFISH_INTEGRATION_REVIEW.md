@@ -9,7 +9,7 @@ Adopt MiroFish as an **optional, isolated swarm-simulation service** for BIORICH
 
 Upstream: https://github.com/666ghj/MiroFish  
 Upstream license: AGPL-3.0  
-Upstream release visible during review: v0.1.2  
+Latest published release visible during review: v0.1.2; current main is ahead of the release tag, so release and main must not be treated as equivalent  
 Upstream stack documented in README: Node.js 18+, Python 3.11–3.12, uv; LLM API compatible with the OpenAI SDK format; Zep Cloud API key; frontend :3000 and backend :5001. The README recommends starting with fewer than 40 simulation rounds because runs can be expensive.
 
 ## Why it fits
@@ -58,9 +58,10 @@ The adapter should expose only narrow operations such as `health`, `create_simul
 ## Security and privacy gates
 
 - Keep MiroFish isolated from the main agent runtime and from production databases.
-- Upstream docker-compose publishes `3000:3000` and `5001:5001` without an explicit loopback host binding. Override this for local-only testing (for example, bind to `127.0.0.1`) and do not expose either port publicly without a separately reviewed authenticated gateway and TLS.
+- Upstream docker-compose publishes `3000:3000` and `5001:5001` without an explicit loopback host binding. Override this for local-only testing (for example, bind to `127.0.0.1`). The current upstream Flask app binds to `0.0.0.0`, enables wildcard CORS for `/api/*`, and the reviewed app factory does not show authentication middleware. Do not expose either port publicly; put any future deployment behind a separately reviewed authenticated gateway and TLS.
 - Use a dedicated low-privilege API credential and separate secret store; never commit `.env`, API keys, Zep credentials, or user data.
 - Start with synthetic or public seed material only. No personal customer data, health records, confidential formulas, supplier contracts, or unpublished IP in initial trials.
+- Current decision: installation is blocked pending IPC/subprocess security review and a local-only deployment hardening plan. A localhost bind alone is not a substitute for application-level access control.
 - Enforce request size, agent count, simulation-round, wall-clock, concurrency, and token/cost limits.
 - Treat uploaded documents, retrieved pages, and agent-generated content as untrusted data, never as executable instructions.
 - Do not let simulated agents call production tools or send messages, place orders, publish content, change repository files, or modify business records.
@@ -73,11 +74,11 @@ The adapter should expose only narrow operations such as `health`, `create_simul
 MiroFish is published under AGPL-3.0. Before distributing a modified version, combining code, offering a network-accessible modified service, or embedding components in a product, obtain a legal review of the exact deployment and interaction model. A separate process/API boundary is an architectural isolation measure, not a guarantee that all AGPL obligations disappear.
 
 Before any installation:
-- pin a reviewed upstream tag or commit; do not track `main` in production;
+- pin a reviewed upstream commit and build from source; do not track `main` or use the floating `latest` image in production. The latest published release observed was v0.1.2, while current main is ahead of that tag;
 - inspect the full license and notices for MiroFish and transitive dependencies;
 - generate and review an SBOM;
 - scan dependencies, Docker images, and container configuration;
-- inspect the .env example and backend API/authentication behavior;
+- inspect the .env example, Flask bind host, CORS configuration, backend API authentication, upload handling, debug mode, and subprocess/IPC command construction;
 - review data retention and Zep Cloud terms;
 - test the deployment in a disposable environment.
 
@@ -86,7 +87,8 @@ Before any installation:
 - MiroFish documents an OpenAI-SDK-compatible LLM endpoint, so a compatible provider may be configurable. This does **not** establish that BIORICHEBRAIN's current provider router can control MiroFish without an adapter.
 - MiroFish documents Zep Cloud as a required configuration item. Treat this as a separate memory store; do not assume it shares BIORICHEBRAIN memory or access controls.
 - The current BIORICHEBRAIN repository already contains Copilot SDK and OpenAI Agents SDK dependencies and has an opt-in BIORICHEBRAIN extension setting. Keep the existing production defaults unchanged.
-- The checked upstream `.env.example` contains LLM and Zep credentials; keep these outside source control. The checked Docker Compose file publishes both service ports and mounts uploaded files under `backend/uploads`. The reviewed metadata does not establish API authentication, so verify route-level auth/CORS and upload handling before any network exposure.
+- The checked upstream `.env.example` contains LLM and Zep credentials; keep these outside source control. The checked Docker Compose file publishes both service ports and mounts uploaded files under `backend/uploads`. The current app factory enables wildcard CORS on API routes and no authentication middleware was visible in the reviewed app factory. Treat the service as trusted-local-only until route-level access control, upload handling, and cross-origin behavior are independently audited.
+- Public security reports allege command-injection / IPC risks in v0.1.2. I have not independently reproduced those reports and will not present them as confirmed; however, current main still contains the file-based IPC implementation, so the IPC/subprocess boundary must receive a focused security review before any installation or exposure. Do not deploy the published v0.1.2 image as-is.
 - The exact MiroFish API contract, authentication posture, background-job lifecycle, cancellation behavior, and data deletion behavior must be verified from pinned source before implementation.
 
 ## Phased implementation plan
