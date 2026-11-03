@@ -1,6 +1,6 @@
 # Office automation stack review — 2026-11-03
 
-**Status:** source-reviewed; integration plan committed on a draft branch. No third-party service was installed, no credentials were created, and no user mailbox or calendar was accessed.
+**Status:** source-reviewed; a pinned, read-only Google Workspace MCP preset and unit test are implemented on the draft branch. No third-party service was installed on the user's machine, no credentials were created, and no user mailbox or calendar was accessed.
 **Scope:** candidates surfaced from the video: email, calendar, spreadsheets, file operations and task automation.
 
 ## Executive decision
@@ -18,7 +18,7 @@ Keep BIORICHEBRAIN's existing TypeScript runtime, MCP registry, approval gate, a
 
 ## Compatibility with current BIORICHEBRAIN
 
-The current `src/bioricheBrain/mcpRegistry.ts` already has an allowlisted MCP preset mechanism for Exa, Firecrawl and Playwright, plus a custom Streamable HTTP MCP endpoint. The custom endpoint requires an explicit comma-separated tool allowlist. This is a useful security boundary, but it is not yet a complete Google Workspace stdio integration.
+The current `src/bioricheBrain/mcpRegistry.ts` has allowlisted MCP presets for Exa, Firecrawl, Playwright and Google Workspace, plus a custom Streamable HTTP MCP endpoint. Google Workspace is a local stdio preset, pinned to `workspace-mcp==2.3.0`, launched with Gmail, Drive, Calendar, Docs and Sheets selected, upstream `--read-only` mode, and a second BIORICHEBRAIN tool filter.
 
 The current registry does **not** provide:
 - a dedicated Google Workspace MCP stdio preset and its OAuth environment validation;
@@ -90,3 +90,18 @@ Therefore this change intentionally adds a reviewed adoption plan only. It does 
 - Aimersion AI Automations: https://github.com/aimersion/ai-automations
 - Cloudflare Agentic Inbox: https://github.com/cloudflare/agentic-inbox
 - Cloudflare Email Agent prerequisites: https://developers.cloudflare.com/agents/examples/email-agent/
+
+
+## Implemented runtime preset
+
+Enable only after the host has `uvx` and Google OAuth credentials configured:
+
+```bash
+BIORICHEBRAIN_MCP_PRESETS=google-workspace
+GOOGLE_OAUTH_CLIENT_ID=<host-secret>
+GOOGLE_OAUTH_CLIENT_SECRET=<host-secret>
+```
+
+The variables must be set in the VS Code extension host process environment (not pasted into source code, issue comments or chat). Restart the extension host after changing environment variables. The server is launched on demand by the MCP registry; first-time OAuth consent is still a manual user action.
+
+Unit test: `src/test/mcpRegistry.test.ts`.
