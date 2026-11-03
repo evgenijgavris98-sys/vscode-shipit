@@ -50,3 +50,10 @@ The existing BIORICHEBRAIN integration remains a loopback-only health-check clie
 - Reddit simulation dispatcher: https://github.com/666ghj/MiroFish/blob/7657031ac01184afe2cb220f5ee3545573b5e843/backend/scripts/run_reddit_simulation.py
 - Twitter simulation dispatcher: https://github.com/666ghj/MiroFish/blob/7657031ac01184afe2cb220f5ee3545573b5e843/backend/scripts/run_twitter_simulation.py
 - Upstream issue #697 (closed as invalid): https://github.com/666ghj/MiroFish/issues/697
+
+
+## API surface finding
+
+At the same pinned commit, the Flask app factory applies wildcard CORS to all `/api/*` routes. The three registered API modules (`graph.py`, `simulation.py`, and `report.py`) expose dozens of route handlers; a source scan found no `login_required`, `require_auth`, token-auth decorator, or authorization middleware in those modules. The app factory's only `before_request` hook logs requests. This is a strong deployment blocker: treat the upstream API as unauthenticated unless a separately enforced reverse-proxy/authentication layer is added and tested.
+
+This finding is limited to the pinned source modules reviewed. It does not establish that no external deployment wrapper exists.
