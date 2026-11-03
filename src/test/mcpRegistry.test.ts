@@ -1,5 +1,5 @@
 import * as assert from "node:assert/strict";
-import { getBioricheMcpPreset } from "../bioricheBrain/mcpRegistry";
+import { getBioricheMcpPreset, getBioricheWorkspaceToolsForAgent } from "../bioricheBrain/mcpRegistry";
 
 test("Google Workspace preset is pinned and read-only", () => {
   const preset = getBioricheMcpPreset("google-workspace");
@@ -23,4 +23,27 @@ test("Google Workspace preset is pinned and read-only", () => {
 
 test("unknown MCP presets are not resolvable", () => {
   assert.equal(getBioricheMcpPreset("unknown-service"), undefined);
+});
+
+test("Workspace tools require explicit agent opt-in and stay role-scoped", () => {
+  const previous = process.env.BIORICHEBRAIN_GOOGLE_WORKSPACE_AGENTS;
+  try {
+    delete process.env.BIORICHEBRAIN_GOOGLE_WORKSPACE_AGENTS;
+    assert.deepEqual(getBioricheWorkspaceToolsForAgent("sales_bot"), []);
+
+    process.env.BIORICHEBRAIN_GOOGLE_WORKSPACE_AGENTS = "sales_bot,data_scientist";
+    const salesTools = getBioricheWorkspaceToolsForAgent("sales_bot");
+    const analystTools = getBioricheWorkspaceToolsForAgent("data_scientist");
+
+    assert.ok(salesTools.includes("search_gmail_messages"));
+    assert.ok(salesTools.includes("get_events"));
+    assert.equal(salesTools.includes("read_sheet_values"), false);
+    assert.ok(analystTools.includes("read_sheet_values"));
+    assert.ok(analystTools.includes("get_doc_content"));
+    assert.equal(analystTools.some((name) => name.includes("gmail")), false);
+    assert.deepEqual(getBioricheWorkspaceToolsForAgent("rd_chemist"), []);
+  } finally {
+    if (previous === undefined) delete process.env.BIORICHEBRAIN_GOOGLE_WORKSPACE_AGENTS;
+    else process.env.BIORICHEBRAIN_GOOGLE_WORKSPACE_AGENTS = previous;
+  }
 });
