@@ -58,7 +58,7 @@ The adapter should expose only narrow operations such as `health`, `create_simul
 ## Security and privacy gates
 
 - Keep MiroFish isolated from the main agent runtime and from production databases.
-- Bind local development services to loopback; do not expose ports 3000/5001 publicly without a separately reviewed authenticated gateway and TLS.
+- Upstream docker-compose publishes `3000:3000` and `5001:5001` without an explicit loopback host binding. Override this for local-only testing (for example, bind to `127.0.0.1`) and do not expose either port publicly without a separately reviewed authenticated gateway and TLS.
 - Use a dedicated low-privilege API credential and separate secret store; never commit `.env`, API keys, Zep credentials, or user data.
 - Start with synthetic or public seed material only. No personal customer data, health records, confidential formulas, supplier contracts, or unpublished IP in initial trials.
 - Enforce request size, agent count, simulation-round, wall-clock, concurrency, and token/cost limits.
@@ -86,6 +86,7 @@ Before any installation:
 - MiroFish documents an OpenAI-SDK-compatible LLM endpoint, so a compatible provider may be configurable. This does **not** establish that BIORICHEBRAIN's current provider router can control MiroFish without an adapter.
 - MiroFish documents Zep Cloud as a required configuration item. Treat this as a separate memory store; do not assume it shares BIORICHEBRAIN memory or access controls.
 - The current BIORICHEBRAIN repository already contains Copilot SDK and OpenAI Agents SDK dependencies and has an opt-in BIORICHEBRAIN extension setting. Keep the existing production defaults unchanged.
+- The checked upstream `.env.example` contains LLM and Zep credentials; keep these outside source control. The checked Docker Compose file publishes both service ports and mounts uploaded files under `backend/uploads`. The reviewed metadata does not establish API authentication, so verify route-level auth/CORS and upload handling before any network exposure.
 - The exact MiroFish API contract, authentication posture, background-job lifecycle, cancellation behavior, and data deletion behavior must be verified from pinned source before implementation.
 
 ## Phased implementation plan
