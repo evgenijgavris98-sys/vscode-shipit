@@ -18,7 +18,7 @@ Keep BIORICHEBRAIN's existing TypeScript runtime, MCP registry, approval gate, a
 
 ## Compatibility with current BIORICHEBRAIN
 
-The current `src/bioricheBrain/mcpRegistry.ts` has allowlisted MCP presets for Exa, Firecrawl, Playwright and Google Workspace, plus a custom Streamable HTTP MCP endpoint. Google Workspace is a local stdio preset, pinned to `workspace-mcp==2.3.0`, launched with Gmail, Drive, Calendar, Docs and Sheets selected, upstream `--read-only` mode, and a second BIORICHEBRAIN tool filter.
+The current `src/bioricheBrain/mcpRegistry.ts` has allowlisted MCP presets for Exa, Firecrawl, Playwright and Google Workspace, plus a custom Streamable HTTP MCP endpoint. Google Workspace is a local stdio preset, pinned to `workspace-mcp==2.3.0`, launched with Gmail, Drive, Calendar, Docs and Sheets selected, upstream `--read-only` mode, a second BIORICHEBRAIN tool filter, and a per-agent permission map.
 
 The current registry does **not** provide:
 - a dedicated Google Workspace MCP stdio preset and its OAuth environment validation;
@@ -37,7 +37,7 @@ Therefore this change intentionally adds a reviewed adoption plan only. It does 
 - Run the server locally over stdio first. Keep OAuth client ID/secret and refresh tokens outside Git, in the host secret store.
 - Select only required services (initially Gmail, Calendar, Drive and Sheets) and the upstream read-only mode.
 - Add a BIORICHEBRAIN preset only after confirming exact tool names and schemas from the pinned upstream release.
-- Apply a per-agent capability map: ORCHESTRATOR may delegate; sales and analyst roles may read approved business records; R&D roles must not read personal mail; no agent gets send/delete/share/write by default.
+- Implemented per-agent capability map: `sales_bot` can read Gmail, Drive and Calendar; `customer_success` can read Gmail only; `data_scientist`, `market_analyst`, `procurement_agent` and `supply_chain` can read Drive, Docs and Sheets. Each role must also be explicitly enabled in `BIORICHEBRAIN_GOOGLE_WORKSPACE_AGENTS`. Other agents, including R&D, legal and ORCHESTRATOR, receive no Workspace tools. No agent gets send/delete/share/write by default.
 - Treat email, documents, calendar descriptions and spreadsheet cells as untrusted content. They may contain prompt injection; never allow their contents to change tool permissions or approval policy.
 - Log tool name, agent, purpose, target identifier, approval decision and outcome. Redact message bodies, OAuth tokens and personal data from traces.
 - Test using synthetic accounts/data; test denial for every write tool; test prompt-injection fixtures; verify no secret appears in logs.
@@ -102,6 +102,6 @@ GOOGLE_OAUTH_CLIENT_ID=<host-secret>
 GOOGLE_OAUTH_CLIENT_SECRET=<host-secret>
 ```
 
-The variables must be set in the VS Code extension host process environment (not pasted into source code, issue comments or chat). Restart the extension host after changing environment variables. The server is launched on demand by the MCP registry; first-time OAuth consent is still a manual user action.
+The example enables Gmail/Drive/Calendar only for `sales_bot` and Drive/Docs/Sheets only for `data_scientist`. Add `customer_success`, `market_analyst`, `procurement_agent` or `supply_chain` only when their data access is approved. The variables must be set in the VS Code extension host process environment (not pasted into source code, issue comments or chat). Restart the extension host after changing environment variables. The server is launched on demand by the MCP registry; first-time OAuth consent is still a manual user action.
 
 Unit test: `src/test/mcpRegistry.test.ts`.
