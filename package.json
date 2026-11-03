@@ -102,6 +102,10 @@
       {
         "command": "shipit.viewLogs",
         "title": "ShipIt: View Logs"
+      },
+      {
+        "command": "bioricheBrain.mirofishHealth",
+        "title": "BIORICHEBRAIN: Check Local MiroFish Health"
       }
     ],
     "configuration": {
