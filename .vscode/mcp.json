@@ -5,11 +5,12 @@
       "url": "https://mcp.exa.ai/mcp"
     },
     "perplexity": {
-      "type": "http",
-      "url": "https://api.perplexity.ai/mcp",
-      "headers": {
-        "Authorization": "Bearer ${env:PERPLEXITY_API_KEY}"
-      }
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@perplexity-ai/mcp-server"
+      ]
     },
     "firecrawl": {
       "type": "http",
@@ -22,7 +23,13 @@
     "playwright": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@playwright/mcp@latest", "--headless", "--caps=core", "--no-webmcp"]
+      "args": [
+        "-y",
+        "@playwright/mcp@latest",
+        "--headless",
+        "--caps=core",
+        "--no-webmcp"
+      ]
     },
     "chrome": {
       "type": "http",
