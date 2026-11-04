@@ -39,7 +39,12 @@ function isRecord(value: unknown): value is MemoryRecord {
 }
 
 function parseDocument(raw: string): MemoryDocument {
-  const value: unknown = JSON.parse(raw);
+  let value: unknown;
+  try {
+    value = JSON.parse(raw);
+  } catch {
+    throw new Error("BIORICHEBRAIN memory is invalid: malformed JSON. Original file was preserved.");
+  }
   if (!value || typeof value !== "object") {
     throw new Error("BIORICHEBRAIN memory is invalid: expected an object.");
   }
