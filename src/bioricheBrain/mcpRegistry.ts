@@ -22,7 +22,25 @@ export interface BioricheMcpPreset {
 }
 
 const PRESETS: Record<BioricheMcpPreset["id"], BioricheMcpPreset> = {
-  "google-workspace": {\n    id: "google-workspace",\n    name: "BIORICHEBRAIN Google Workspace (read-only)",\n    transport: "stdio",\n    // Pin the upstream package version; uvx installs it into its isolated cache.\n    fullCommand: "uvx --from workspace-mcp==2.3.0 workspace-mcp --tools gmail drive calendar docs sheets --read-only --tool-tier core",\n    // Defense in depth: do not expose any write-capable upstream tools to agents.\n    allowedTools: [\n      "search_gmail_messages",\n      "get_gmail_message_content",\n      "get_gmail_messages_content_batch",\n      "search_drive_files",\n      "get_drive_file_content",\n      "list_calendars",\n      "get_events",\n      "get_doc_content",\n      "read_sheet_values",\n    ],\n  },
+  "google-workspace": {
+    id: "google-workspace",
+    name: "BIORICHEBRAIN Google Workspace (read-only)",
+    transport: "stdio",
+    // Pin the upstream package version; uvx installs it into its isolated cache.
+    fullCommand: "uvx --from workspace-mcp==2.3.0 workspace-mcp --tools gmail drive calendar docs sheets --read-only --tool-tier core",
+    // Defense in depth: do not expose any write-capable upstream tools to agents.
+    allowedTools: [
+      "search_gmail_messages",
+      "get_gmail_message_content",
+      "get_gmail_messages_content_batch",
+      "search_drive_files",
+      "get_drive_file_content",
+      "list_calendars",
+      "get_events",
+      "get_doc_content",
+      "read_sheet_values",
+    ],
+  },
   exa: {
     id: "exa",
     name: "BIORICHEBRAIN Exa",
