@@ -27,10 +27,10 @@ A private, self-hosted image/chat workspace for BIORICHEBRAIN R&D: raw-material 
 
    ```powershell
    Set-ExecutionPolicy -Scope Process Bypass
-   .\\install-windows.ps1
+   .\install-windows.ps1
    ```
 
-The script creates a private random `.env` if absent, starts containers, downloads `qwen2.5vl:3b`, checks the local web endpoint, and opens the browser. It does not change the machine-wide execution policy.
+The script creates a private random `.env` if absent, starts containers, downloads `qwen2.5vl:3b`, checks the local web endpoint, and opens the browser. It uses .NET Framework-compatible cryptographic APIs and does not change the machine-wide execution policy.
 
 ## Manual install (all platforms)
 
