@@ -1,3 +1,4 @@
+import type { BrainAgent } from "./types";
 import {
   MCPServerStdio,
   MCPServerStreamableHttp,
@@ -12,7 +13,7 @@ export interface BioricheMcpConfig {
 }
 
 export interface BioricheMcpPreset {
-  id: "exa" | "firecrawl" | "playwright";
+  id: "exa" | "firecrawl" | "playwright" | "google-workspace";
   name: string;
   transport: "streamable-http" | "stdio";
   url?: string;
@@ -21,6 +22,25 @@ export interface BioricheMcpPreset {
 }
 
 const PRESETS: Record<BioricheMcpPreset["id"], BioricheMcpPreset> = {
+  "google-workspace": {
+    id: "google-workspace",
+    name: "BIORICHEBRAIN Google Workspace (read-only)",
+    transport: "stdio",
+    // Pin the upstream package version; uvx installs it into its isolated cache.
+    fullCommand: "uvx --from workspace-mcp==2.3.0 workspace-mcp --tools gmail drive calendar docs sheets --read-only --tool-tier core",
+    // Defense in depth: do not expose any write-capable upstream tools to agents.
+    allowedTools: [
+      "search_gmail_messages",
+      "get_gmail_message_content",
+      "get_gmail_messages_content_batch",
+      "search_drive_files",
+      "get_drive_file_content",
+      "list_calendars",
+      "get_events",
+      "get_doc_content",
+      "read_sheet_values",
+    ],
+  },
   exa: {
     id: "exa",
     name: "BIORICHEBRAIN Exa",
@@ -49,11 +69,65 @@ const PRESETS: Record<BioricheMcpPreset["id"], BioricheMcpPreset> = {
   },
 };
 
+export function getBioricheMcpPreset(id: string): BioricheMcpPreset | undefined {
+  const preset = PRESETS[id as BioricheMcpPreset["id"]];
+  return preset ? { ...preset, allowedTools: [...preset.allowedTools] } : undefined;
+}
+
 function csvEnv(name: string): string[] {
   return (process.env[name] ?? "")
     .split(",")
     .map((value) => value.trim())
     .filter(Boolean);
+}
+
+const WORKSPACE_AGENT_TOOLS: Partial<Record<BrainAgent, readonly string[]>> = {
+  sales_bot: [
+    "search_gmail_messages",
+    "get_gmail_message_content",
+    "get_gmail_messages_content_batch",
+    "search_drive_files",
+    "get_drive_file_content",
+    "list_calendars",
+    "get_events",
+  ],
+  customer_success: [
+    "search_gmail_messages",
+    "get_gmail_message_content",
+    "get_gmail_messages_content_batch",
+  ],
+  data_scientist: [
+    "search_drive_files",
+    "get_drive_file_content",
+    "get_doc_content",
+    "read_sheet_values",
+  ],
+  market_analyst: [
+    "search_drive_files",
+    "get_drive_file_content",
+    "get_doc_content",
+    "read_sheet_values",
+  ],
+  procurement_agent: [
+    "search_drive_files",
+    "get_drive_file_content",
+    "get_doc_content",
+    "read_sheet_values",
+  ],
+  supply_chain: [
+    "search_drive_files",
+    "get_drive_file_content",
+    "get_doc_content",
+    "read_sheet_values",
+  ],
+};
+
+export function getBioricheWorkspaceToolsForAgent(agent: BrainAgent): string[] {
+  const enabledAgents = csvEnv("BIORICHEBRAIN_GOOGLE_WORKSPACE_AGENTS") as BrainAgent[];
+  if (!enabledAgents.includes(agent)) return [];
+  const roleTools = WORKSPACE_AGENT_TOOLS[agent] ?? [];
+  const presetTools = PRESETS["google-workspace"].allowedTools;
+  return roleTools.filter((name) => presetTools.includes(name));
 }
 
 /**
@@ -63,7 +137,7 @@ function csvEnv(name: string): string[] {
  * The preset surface is read-only by default. Mutating browser/input capabilities
  * must be added only behind BIORICHEBRAIN approval/audit controls.
  */
-export function createBioricheMcpServers() {
+export function createBioricheMcpServers(agent?: BrainAgent) {
   const presetIds = csvEnv("BIORICHEBRAIN_MCP_PRESETS") as BioricheMcpPreset["id"][];
   const servers = [];
 
@@ -71,7 +145,12 @@ export function createBioricheMcpServers() {
     const preset = PRESETS[id];
     if (!preset) continue;
 
-    const toolFilter = createMCPToolStaticFilter({ allowed: preset.allowedTools });
+    const allowedTools = id === "google-workspace"
+      ? (agent ? getBioricheWorkspaceToolsForAgent(agent) : [])
+      : preset.allowedTools;
+    if (allowedTools.length === 0) continue;
+
+    const toolFilter = createMCPToolStaticFilter({ allowed: allowedTools });
 
     if (preset.transport === "stdio") {
       servers.push(
