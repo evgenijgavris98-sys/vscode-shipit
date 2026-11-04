@@ -1,0 +1,28 @@
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: biorichebrain-ollama
+    restart: unless-stopped
+    volumes:
+      - ollama_data:/root/.ollama
+    # For NVIDIA GPU, add: deploy.resources.reservations.devices (see official Ollama Docker docs).
+    # Do not expose 11434 publicly; it is reachable only inside this Compose network.
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: biorichebrain-open-webui
+    restart: unless-stopped
+    depends_on:
+      - ollama
+    ports:
+      - "127.0.0.1:3000:8080"
+    environment:
+      OLLAMA_BASE_URL: http://ollama:11434
+      WEBUI_SECRET_KEY: ${WEBUI_SECRET_KEY:?Set WEBUI_SECRET_KEY in .env}
+      WEBUI_AUTH: "True"
+    volumes:
+      - open_webui_data:/app/backend/data
+
+volumes:
+  ollama_data:
+  open_webui_data:

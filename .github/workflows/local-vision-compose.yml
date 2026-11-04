@@ -1,0 +1,23 @@
+name: Local Vision Compose Validation
+
+on:
+  pull_request:
+    paths:
+      - "deploy/local-vision/**"
+      - ".github/workflows/local-vision-compose.yml"
+  push:
+    branches: [main]
+    paths:
+      - "deploy/local-vision/**"
+      - ".github/workflows/local-vision-compose.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  compose-config:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate Docker Compose configuration
+        run: docker compose --env-file deploy/local-vision/.env.example -f deploy/local-vision/docker-compose.yml config --quiet
