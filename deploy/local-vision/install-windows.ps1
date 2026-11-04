@@ -12,8 +12,9 @@ if ($LASTEXITCODE -ne 0) {
 
 if (-not (Test-Path ".env")) {
   $secretBytes = New-Object byte[] 32
-  [System.Security.Cryptography.RandomNumberGenerator]::Fill($secretBytes)
-  $secret = [Convert]::ToHexString($secretBytes).ToLowerInvariant()
+  $rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+  try { $rng.GetBytes($secretBytes) } finally { $rng.Dispose() }
+  $secret = [BitConverter]::ToString($secretBytes).Replace("-", "").ToLowerInvariant()
   Set-Content -Path ".env" -Value "WEBUI_SECRET_KEY=$secret" -Encoding ascii
   Write-Host "Created local .env with a random secret. Keep it private; do not commit it."
 }
@@ -35,7 +36,7 @@ for ($i = 0; $i -lt 30; $i++) {
   } catch { Start-Sleep -Seconds 2 }
 }
 if (-not $ready) {
-  Write-Warning "Containers started, but health endpoint did not respond yet. Check: docker compose logs"
+  Write-Warning "Containers started, but health endpoint did not respond yet. Check: docker compose --env-file .env -f docker-compose.yml logs"
 } else {
   Write-Host "Open WebUI is available at http://localhost:3000"
   Start-Process "http://localhost:3000"
