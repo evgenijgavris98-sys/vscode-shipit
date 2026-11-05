@@ -46,7 +46,6 @@ suite("BIORICHE BRAIN configuration", () => {
   });
 });
 
-
 test("falls back safely for malformed QA retry values", () => {
   const previous = process.env.BIORICHE_BRAIN_MAX_QA_RETRIES;
   process.env.BIORICHE_BRAIN_MAX_QA_RETRIES = "not-a-number";
@@ -63,7 +62,6 @@ test("registers exactly 31 uniquely identified BIORICHEBRAIN agents", () => {
   assert.equal(new Set(AGENT_REGISTRY.map((agent) => agent.id)).size, 31);
 });
 
-
 test("Copilot permission requests fail closed unless explicitly approved once", () => {
   assert.deepEqual(permissionResultForDecision("Approve once"), { kind: "approve-once" });
   assert.deepEqual(permissionResultForDecision("Deny"), {
@@ -73,7 +71,6 @@ test("Copilot permission requests fail closed unless explicitly approved once", 
   assert.equal(permissionResultForDecision(undefined).kind, "reject");
   assert.equal(permissionResultForDecision("unexpected").kind, "reject");
 });
-
 
 test("registers video roles and denies them shell access by default", () => {
   for (const role of ["video_director","video_scriptwriter","storyboard_agent","video_generator","voice_avatar_agent","video_editor","subtitle_localization","video_qa"]) assert.ok(AGENT_REGISTRY.some((agent) => agent.id === role));
@@ -85,7 +82,6 @@ test("validates canonical video pipeline ordering", () => {
   assert.ok(validateVideoPipeline(["brief", "qa", "script"]).some((error) => error.includes("canonical order")));
   assert.ok(validateVideoPipeline(["brief", "brief"]).some((error) => error.includes("must not repeat")));
 });
-
 
 test("selects only supported BIORICHEBRAIN providers from environment", () => {
   const previous = process.env.BIORICHE_BRAIN_PROVIDER;
@@ -102,9 +98,16 @@ test("selects only supported BIORICHEBRAIN providers from environment", () => {
   }
 });
 
-
 test("maps only curated skills to named BIORICHEBRAIN agents", () => {
   assert.deepEqual(getSkillIdsForAgent("sales_bot"), ["brand-copywriting", "growth-marketing"]);
   assert.deepEqual(getSkillIdsForAgent("video_scriptwriter"), ["brand-copywriting"]);
+  assert.deepEqual(getSkillIdsForAgent("orchestrator"), []);
+});
+
+test("maps ECC-derived reviewed skills to existing specialist roles without dropping legacy skills", () => {
+  assert.deepEqual(getSkillIdsForAgent("qa_inspector"), ["software-engineering", "ocrmypdf", "code-review", "plan-and-verify"]);
+  assert.deepEqual(getSkillIdsForAgent("devops"), ["software-engineering", "security-review", "release-readiness"]);
+  assert.deepEqual(getSkillIdsForAgent("market_analyst"), ["growth-marketing", "analytics-review", "research-first", "documentation-lookup"]);
+  assert.deepEqual(getSkillIdsForAgent("rd_chemist"), ["ocrmypdf", "research-first", "documentation-lookup", "plan-and-verify"]);
   assert.deepEqual(getSkillIdsForAgent("orchestrator"), []);
 });
