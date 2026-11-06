@@ -9,7 +9,7 @@ const DEFAULT_MODELS: Record<ModelTier, string> = {
 
 export type ReasoningEffort = "low" | "medium" | "high" | "xhigh" | "max";
 
-export type BrainProviderId = "openai" | "kimi" | "qwen" | "claude" | "deepseek";
+export type BrainProviderId = "openai" | "kimi" | "qwen" | "claude" | "deepseek" | "our_free_model";
 
 export interface BrainConfig {
   enabled: boolean;
@@ -28,6 +28,9 @@ export interface BrainConfig {
   deepseekApiKey?: string;
   deepseekBaseUrl: string;
   deepseekModel: string;
+  ourFreeModelBaseUrl: string;
+  ourFreeModelApiKey?: string;
+  ourFreeModelModel?: string;
   models: Record<ModelTier, string>;
   reasoningEffort: ReasoningEffort;
   fastMode: boolean;
@@ -65,7 +68,7 @@ export function loadBrainConfig(enabledOverride?: boolean): BrainConfig {
   return {
     enabled: enabledOverride ?? booleanEnv("BIORICHE_BRAIN_ENABLED", false),
     apiKey: env("OPENAI_API_KEY"),
-    provider: provider === "kimi" ? "kimi" : provider === "qwen" ? "qwen" : provider === "claude" ? "claude" : provider === "deepseek" ? "deepseek" : "openai",
+    provider: provider === "our_free_model" ? "our_free_model" : provider === "kimi" ? "kimi" : provider === "qwen" ? "qwen" : provider === "claude" ? "claude" : provider === "deepseek" ? "deepseek" : "openai",
     kimiApiKey: env("KIMI_API_KEY"),
     kimiBaseUrl: env("KIMI_BASE_URL") ?? "https://api.kimi.com/coding/v1",
     kimiModel: env("KIMI_MODEL") ?? "kimi-k2.5",
@@ -79,6 +82,9 @@ export function loadBrainConfig(enabledOverride?: boolean): BrainConfig {
     deepseekApiKey: env("DEEPSEEK_API_KEY"),
     deepseekBaseUrl: env("DEEPSEEK_BASE_URL") ?? "https://api.deepseek.com",
     deepseekModel: env("DEEPSEEK_MODEL") ?? "deepseek-v4-pro",
+    ourFreeModelBaseUrl: env("OUR_FREE_MODEL_BASE_URL") ?? "http://127.0.0.1:18900/v1",
+    ourFreeModelApiKey: env("OUR_FREE_MODEL_API_KEY"),
+    ourFreeModelModel: env("OUR_FREE_MODEL_MODEL"),
     models: {
       luna: env("BIORICHE_BRAIN_MODEL_LUNA") ?? DEFAULT_MODELS.luna,
       terra: env("BIORICHE_BRAIN_MODEL_TERRA") ?? DEFAULT_MODELS.terra,

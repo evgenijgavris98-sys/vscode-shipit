@@ -55,6 +55,10 @@ export class SmartRouterProvider implements BrainProvider {
         errors.push("deepseek: missing DEEPSEEK_API_KEY");
         continue;
       }
+      if (id === "our_free_model" && !this.config.ourFreeModelApiKey) {
+        errors.push("our_free_model: missing OUR_FREE_MODEL_API_KEY");
+        continue;
+      }
       if (id === "kimi" && !this.config.kimiApiKey && !this.config.kimiMcpUrl) {
         errors.push("kimi: missing Kimi credentials");
         continue;
