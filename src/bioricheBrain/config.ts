@@ -68,7 +68,7 @@ export function loadBrainConfig(enabledOverride?: boolean): BrainConfig {
   return {
     enabled: enabledOverride ?? booleanEnv("BIORICHE_BRAIN_ENABLED", false),
     apiKey: env("OPENAI_API_KEY"),
-    provider: provider === "kimi" ? "kimi" : provider === "qwen" ? "qwen" : provider === "claude" ? "claude" : provider === "deepseek" ? "deepseek" : "openai",
+    provider: provider === "our_free_model" ? "our_free_model" : provider === "kimi" ? "kimi" : provider === "qwen" ? "qwen" : provider === "claude" ? "claude" : provider === "deepseek" ? "deepseek" : "openai",
     kimiApiKey: env("KIMI_API_KEY"),
     kimiBaseUrl: env("KIMI_BASE_URL") ?? "https://api.kimi.com/coding/v1",
     kimiModel: env("KIMI_MODEL") ?? "kimi-k2.5",
