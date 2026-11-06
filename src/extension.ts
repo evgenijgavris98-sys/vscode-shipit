@@ -127,7 +127,7 @@ class ShipItExtension {
                 const config = loadBrainConfig(vscode.workspace.getConfiguration('shipit.bioricheBrain').get<boolean>('enabled'));
                 if (!config.enabled) {
                     const action = await vscode.window.showWarningMessage(
-                        'BIORICHEBRAIN is disabled. Set BIORICHE_BRAIN_ENABLED=true and OPENAI_API_KEY in the extension host environment, then restart VS Code.',
+                        'BIORICHEBRAIN is disabled. Set BIORICHE_BRAIN_ENABLED=true and configure credentials for the selected provider in the extension host environment, then restart VS Code.',
                         'Open Documentation'
                     );
                     if (action === 'Open Documentation') {
@@ -193,7 +193,7 @@ class ShipItExtension {
             vscode.commands.registerCommand('bioricheBrain.runTeam', async () => {
                 const config = loadBrainConfig(vscode.workspace.getConfiguration('shipit.bioricheBrain').get<boolean>('enabled'));
                 if (!config.enabled) {
-                    vscode.window.showWarningMessage('BIORICHEBRAIN is disabled. Enable shipit.bioricheBrain.enabled and provide OPENAI_API_KEY.');
+                    vscode.window.showWarningMessage('BIORICHEBRAIN is disabled. Enable shipit.bioricheBrain.enabled and configure credentials for the selected provider.');
                     return;
                 }
                 if (config.provider === 'openai' && !config.apiKey) {
