@@ -6,6 +6,7 @@ import { KimiProvider } from './bioricheBrain/kimiProvider';
 import { QwenProvider } from './bioricheBrain/qwenProvider';
 import { ClaudeProvider } from './bioricheBrain/claudeProvider';
 import { DeepSeekProvider } from './bioricheBrain/deepseekProvider';
+import { OurFreeModelProvider } from './bioricheBrain/ourFreeModelProvider';
 import { SmartRouterProvider } from './bioricheBrain/smartRouter';
 import type { BrainProvider } from './bioricheBrain/types';
 import { TeamOrchestrator } from './bioricheBrain/teamOrchestrator';
@@ -140,6 +141,10 @@ class ShipItExtension {
                 }
                 if (config.provider === 'kimi' && !config.kimiApiKey && !config.kimiMcpUrl) {
                     vscode.window.showErrorMessage('BIORICHEBRAIN: configure KIMI_API_KEY or KIMI_MCP_URL for Kimi execution.');
+                    return;
+                }
+                if (config.provider === 'our_free_model' && !config.ourFreeModelApiKey) {
+                    vscode.window.showErrorMessage('BIORICHEBRAIN: OUR_FREE_MODEL_API_KEY is missing. Start the local Our Free Model service and set its generated API key in the extension host environment.');
                     return;
                 }
                 if (config.provider === 'deepseek' && !config.deepseekApiKey) {
@@ -282,6 +287,7 @@ class ShipItExtension {
         if (config.provider === 'qwen') return new QwenProvider(config);
         if (config.provider === 'claude') return new ClaudeProvider(config);
         if (config.provider === 'deepseek') return new DeepSeekProvider(config);
+        if (config.provider === 'our_free_model') return new OurFreeModelProvider(config);
         return new OpenAIResponsesProvider(config, {
             workspaceRoot: vscode.workspace.workspaceFolders?.[0]?.uri.fsPath,
             approvalGate: this.approvalGate,
